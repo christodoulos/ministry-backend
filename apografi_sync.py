@@ -1,3 +1,4 @@
-from src.apografi.lib import sync_dictionaries
+from src.apografi.lib import sync_apografi_dictionaries, sync_organizations
 
-sync_dictionaries()
+# sync_apografi_dictionaries()
+sync_organizations()

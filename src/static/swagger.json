@@ -4,5 +4,69 @@
     "title": "Υπουργείο Εσωτερικών",
     "version": "0.0.1"
   },
-  "paths": {}
+  "paths": {
+    "/apografi/dictionary/{dictionary}": {
+      "get": {
+        "summary": "Get dictionary by code",
+        "parameters": [
+          {
+            "name": "dictionary",
+            "in": "path",
+            "required": true,
+            "description": "The code of the dictionary",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "apografi_id": { "type": "integer" },
+                      "parentId": { "type": "integer" },
+                      "code": { "type": "string" },
+                      "code_el": { "type": "string" },
+                      "description": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/apografi/dictionary/{dictionary}/ids": {
+      "get": {
+        "summary": "Get dictionary ids by code",
+        "parameters": [
+          {
+            "name": "dictionary",
+            "in": "path",
+            "required": true,
+            "description": "The code of the dictionary",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "integer" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }

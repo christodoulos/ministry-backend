@@ -1,3 +1,4 @@
+async-timeout==4.0.3
 blinker==1.7.0
 certifi==2023.11.17
 charset-normalizer==3.3.2
@@ -11,6 +12,7 @@ flask-mongoengine @ git+https://github.com/idoshr/flask-mongoengine.git@e244408a
 flask-swagger-ui==4.11.1
 Flask-WTF==1.2.1
 gunicorn==21.2.0
+hiredis==2.3.2
 idna==3.6
 itsdangerous==2.1.2
 Jinja2==3.1.2
@@ -24,6 +26,7 @@ pymongo==4.6.1
 python-dateutil==2.8.2
 python-dotenv==1.0.0
 pytz==2023.3.post1
+redis==5.0.1
 requests==2.31.0
 six==1.16.0
 tzdata==2023.4

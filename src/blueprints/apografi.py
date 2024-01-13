@@ -22,5 +22,12 @@ def post_lejiko():
 
 @apografi.route("/dictionary/<string:dictionary>", methods=["GET"])
 def get_dictionary(dictionary: str):
-    lejika = Dictionary.objects(code_en=dictionary).all()
+    lejika = Dictionary.objects(code=dictionary)
     return Response(lejika.to_json(), mimetype="application/json")
+
+
+@apografi.route("/dictionary/<string:dictionary>/ids", methods=["GET"])
+def get_dictionary_ids(dictionary: str):
+    docs = Dictionary.objects(code=dictionary)
+    ids = [doc["id"] for doc in docs]
+    return Response(json.dumps(ids), mimetype="application/json")

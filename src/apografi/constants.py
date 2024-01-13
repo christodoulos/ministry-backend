@@ -1,5 +1,7 @@
 APOGRAFI_API_URL = "https://hr.apografi.gov.gr/api/"
 
+# https://hr.apografi.gov.gr/api.html#genikes-plhrofories-le3ika
+
 APOGRAFI_DICTIONARIES_URL = f"{APOGRAFI_API_URL}public/metadata/dictionary/"
 
 APOGRAFI_DICTIONARIES = {
@@ -33,3 +35,7 @@ APOGRAFI_DICTIONARIES_SINGULAR = {
     "Countries": "Country",
     "Cities": "City",
 }
+
+# https://hr.apografi.gov.gr/api.html#genikes-plhrofories-foreis
+
+APOGRAFI_ORGANIZATIONS_URL = f"{APOGRAFI_API_URL}public/organizations"
