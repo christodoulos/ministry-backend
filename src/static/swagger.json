@@ -1,19 +1,96 @@
 {
   "openapi": "3.0.0",
+
   "info": {
     "title": "Υπουργείο Εσωτερικών",
     "version": "0.0.1"
   },
+
   "paths": {
-    "/apografi/dictionary/{dictionary}": {
+    "/apografi/dictionary/{dictionary}/{id}/description": {
       "get": {
-        "summary": "Get dictionary by code",
+        "summary": "Επιστρέφει την περιγραφή του λεξικού από το id",
+        "tags": ["Δεδομένα Απογραφής"],
         "parameters": [
           {
             "name": "dictionary",
             "in": "path",
             "required": true,
-            "description": "The code of the dictionary",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/apografi/dictionary/{dictionary}/{description}/id": {
+      "get": {
+        "summary": "Επιστρέφει το id του λεξικού από την περιγραφή",
+        "tags": ["Δεδομένα Απογραφής"],
+        "parameters": [
+          {
+            "name": "dictionary",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/apografi/dictionary/{dictionary}": {
+      "get": {
+        "summary": "Επιστρέφει τη συνολική καταχώρηση του λεξικού",
+        "tags": ["Δεδομένα Απογραφής"],
+        "parameters": [
+          {
+            "name": "dictionary",
+            "in": "path",
+            "required": true,
+            "description": "Το όνομα (ενικός) του λεξικού από την απογραφή (https://t.ly/dWBz1)",
             "schema": { "type": "string" }
           }
         ],
@@ -41,15 +118,17 @@
         }
       }
     },
+
     "/apografi/dictionary/{dictionary}/ids": {
       "get": {
-        "summary": "Get dictionary ids by code",
+        "summary": "Επιστρέφει τα id του λεξικού",
+        "tags": ["Δεδομένα Απογραφής"],
         "parameters": [
           {
             "name": "dictionary",
             "in": "path",
             "required": true,
-            "description": "The code of the dictionary",
+            "description": "Το όνομα (ενικός) του λεξικού από την απογραφή (https://t.ly/dWBz1)",
             "schema": { "type": "string" }
           }
         ],
