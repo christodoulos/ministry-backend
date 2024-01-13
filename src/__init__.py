@@ -2,8 +2,6 @@ from flask import Flask
 from flask_mongoengine import MongoEngine
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
-
-
 from os import environ, path
 from dotenv import load_dotenv
 
@@ -15,22 +13,16 @@ app = Flask(__name__)
 
 app.config["MONGODB_SETTINGS"] = [
     {
-        "db": "attica_dt",
+        "db": "apografi",
         "host": environ.get("MONGODB_HOST"),
         "port": int(environ.get("MONGODB_PORT")),
-        "alias": "attica_dt",
+        "alias": "apografi",
     },
     {
-        "db": "attica_green",
+        "db": "ypes",
         "host": environ.get("MONGODB_HOST"),
         "port": int(environ.get("MONGODB_PORT")),
-        "alias": "attica_green",
-    },
-    {
-        "db": "impetus-dev",
-        "host": environ.get("MONGODB_HOST"),
-        "port": int(environ.get("MONGODB_PORT")),
-        "alias": "impetus-dev",
+        "alias": "ypes",
     },
 ]
 
@@ -42,14 +34,18 @@ cors = CORS(
 db = MongoEngine()
 db.init_app(app)
 
-
+# Swagger
 SWAGGER_URL = "/docs"
 API_URL = "/static/swagger.json"
-
 swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
     config={"app_name": "Υπουργείο Εσωτερικών"},
 )
-
 app.register_blueprint(swaggerui_blueprint)
+
+# Import blueprints
+from src.blueprints.apografi import apografi  # noqa: E402
+
+# Register blueprints
+app.register_blueprint(apografi, url_prefix="/apografi")
