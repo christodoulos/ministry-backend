@@ -1,16 +1,35 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.0.3",
 
   "info": {
     "title": "Υπουργείο Εσωτερικών",
     "version": "0.0.1"
   },
 
+  "tags": [
+    {
+      "name": "Δεδομένα Απογραφής - Λεξικά",
+      "description": "Λεξικά που συγχρονίζονται ημερήσια από το API της Απογραφής",
+      "externalDocs": {
+        "description": "Λεξικά Απογραφής",
+        "url": "https://t.ly/-WBAk"
+      }
+    },
+    {
+      "name": "Δεδομένα Απογραφής - Φορείς",
+      "description": "Φορείς που συγχρονίζονται ημερήσια από το API της Απογραφής",
+      "externalDocs": {
+        "description": "Φορείς Απογραφής",
+        "url": "https://t.ly/gIFkc"
+      }
+    }
+  ],
+
   "paths": {
     "/apografi/dictionary/{dictionary}/{id}/description": {
       "get": {
         "summary": "Επιστρέφει την περιγραφή του λεξικού από το id",
-        "tags": ["Δεδομένα Απογραφής"],
+        "tags": ["Δεδομένα Απογραφής - Λεξικά"],
         "parameters": [
           {
             "name": "dictionary",
@@ -47,7 +66,7 @@
     "/apografi/dictionary/{dictionary}/{description}/id": {
       "get": {
         "summary": "Επιστρέφει το id του λεξικού από την περιγραφή",
-        "tags": ["Δεδομένα Απογραφής"],
+        "tags": ["Δεδομένα Απογραφής - Λεξικά"],
         "parameters": [
           {
             "name": "dictionary",
@@ -84,7 +103,7 @@
     "/apografi/dictionary/{dictionary}": {
       "get": {
         "summary": "Επιστρέφει τη συνολική καταχώρηση του λεξικού",
-        "tags": ["Δεδομένα Απογραφής"],
+        "tags": ["Δεδομένα Απογραφής - Λεξικά"],
         "parameters": [
           {
             "name": "dictionary",
@@ -122,7 +141,7 @@
     "/apografi/dictionary/{dictionary}/ids": {
       "get": {
         "summary": "Επιστρέφει τα id του λεξικού",
-        "tags": ["Δεδομένα Απογραφής"],
+        "tags": ["Δεδομένα Απογραφής - Λεξικά"],
         "parameters": [
           {
             "name": "dictionary",
@@ -144,6 +163,141 @@
               }
             }
           }
+        }
+      }
+    },
+
+    "/apografi/organization/{code}": {
+      "get": {
+        "summary": "Επιστρέφει το φορέα με τον κωδικό code",
+        "tags": ["Δεδομένα Απογραφής - Φορείς"],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "description": "Ο κωδικός του φορέα",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ο Φορέας βρέθηκε",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/apografi/organization/{label}/label": {
+      "get": {
+        "summary": "Επιστρέφει τους φορείς που η επίσημη ονομασία τους περιέχει το label",
+        "tags": ["Δεδομένα Απογραφής - Φορείς"],
+        "parameters": [
+          {
+            "name": "label",
+            "in": "path",
+            "required": true,
+            "description": "Μέρος της επίσημης ονομασίας του φορέα",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "components": {
+    "schemas": {
+      "Organization": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "preferredLabel": { "type": "string" },
+          "alternativeLabels": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "purpose": {
+            "type": "array",
+            "items": { "type": "integer" }
+          },
+          "spatial": {
+            "type": "array",
+            "items": { "$ref": "#/components/subschemas/Spatial" }
+          },
+          "identifier": { "type": "string" },
+          "subOrganizationOf": { "type": "string" },
+          "organizationType": { "type": "integer" },
+          "description": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "contactPoint": { "$ref": "#/components/subschemas/ContactPoint" },
+          "vatId": { "type": "string" },
+          "status": { "type": "string" },
+          "foundationDate": { "type": "string", "format": "date-time" },
+          "terminationDate": { "type": "string", "format": "date-time" },
+          "mainDataUpdateDate": { "type": "string", "format": "date-time" },
+          "organizationStructureUpdateDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "foundationFek": { "$ref": "#/components/subschemas/FoundationFek" },
+          "mainAddress": { "$ref": "#/components/subschemas/Address" },
+          "secondaryAddresses": {
+            "type": "array",
+            "items": { "$ref": "#/components/subschemas/Address" }
+          }
+        },
+        "required": ["code"]
+      }
+    },
+    "subschemas": {
+      "Spatial": {
+        "type": "object",
+        "properties": {
+          "countryId": { "type": "integer" },
+          "cityId": { "type": "integer" }
+        }
+      },
+      "ContactPoint": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "telephone": { "type": "string" }
+        }
+      },
+      "FoundationFek": {
+        "type": "object",
+        "properties": {
+          "year": { "type": "integer" },
+          "number": { "type": "string" },
+          "issue": { "type": "string" }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "fullAddress": { "type": "string" },
+          "postCode": { "type": "string" },
+          "adminUnitLevel1": { "type": "integer" },
+          "adminUnitLevel2": { "type": "integer" }
         }
       }
     }

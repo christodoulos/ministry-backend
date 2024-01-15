@@ -1,9 +1,11 @@
 from flask import Blueprint, request, Response
 import json
 
-from src.models.apografi import Dictionary
+from src.models.apografi import Dictionary, Organization
 
 apografi = Blueprint("apografi", __name__)
+
+# Dictionary Routes
 
 
 @apografi.route("/dictionary", methods=["POST"])
@@ -56,3 +58,32 @@ def get_dictionary_ids(dictionary: str):
     docs = Dictionary.objects(code=dictionary)
     ids = [doc["id"] for doc in docs]
     return Response(json.dumps(ids), mimetype="application/json", status=200)
+
+
+# Organization Routes
+
+
+@apografi.route("/organization", methods=["GET"])
+def get_organization():
+    organization = Organization.objects()
+    return Response(organization.to_json(), mimetype="application/json", status=200)
+
+
+@apografi.route("/organization/<string:code>", methods=["GET"])
+def get_organization_id(code: str):
+    try:
+        doc = Organization.objects().get(code=code)
+        return Response(doc.to_json(), mimetype="application/json", status=200)
+    except Exception as e:
+        error = {"error": str(e)}
+        return Response(json.dumps(error), mimetype="application/json", status=404)
+
+
+@apografi.route("/organization/<string:label>/label", methods=["GET"])
+def get_organization_label(label: str):
+    try:
+        doc = Organization.objects(preferredLabel__icontains=label)
+        return Response(doc.to_json(), mimetype="application/json", status=200)
+    except Exception as e:
+        error = {"error": str(e)}
+        return Response(json.dumps(error), mimetype="application/json", status=404)
