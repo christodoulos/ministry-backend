@@ -268,6 +268,7 @@
         "required": ["code"]
       }
     },
+
     "subschemas": {
       "Spatial": {
         "type": "object",
@@ -276,6 +277,7 @@
           "cityId": { "type": "integer" }
         }
       },
+
       "ContactPoint": {
         "type": "object",
         "properties": {
@@ -283,6 +285,7 @@
           "telephone": { "type": "string" }
         }
       },
+
       "FoundationFek": {
         "type": "object",
         "properties": {
@@ -291,6 +294,7 @@
           "issue": { "type": "string" }
         }
       },
+
       "Address": {
         "type": "object",
         "properties": {
