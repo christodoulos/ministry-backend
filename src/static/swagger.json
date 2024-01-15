@@ -241,14 +241,16 @@
           },
           "spatial": {
             "type": "array",
-            "items": { "$ref": "#/components/subschemas/Spatial" }
+            "items": { "$ref": "#/components/schemas/Organization/Spatial" }
           },
           "identifier": { "type": "string" },
           "subOrganizationOf": { "type": "string" },
           "organizationType": { "type": "integer" },
           "description": { "type": "string" },
           "url": { "type": "string", "format": "uri" },
-          "contactPoint": { "$ref": "#/components/subschemas/ContactPoint" },
+          "contactPoint": {
+            "$ref": "#/components/schemas/Organization/ContactPoint"
+          },
           "vatId": { "type": "string" },
           "status": { "type": "string" },
           "foundationDate": { "type": "string", "format": "date-time" },
@@ -258,51 +260,54 @@
             "type": "string",
             "format": "date-time"
           },
-          "foundationFek": { "$ref": "#/components/subschemas/FoundationFek" },
-          "mainAddress": { "$ref": "#/components/subschemas/Address" },
+          "foundationFek": {
+            "$ref": "#/components/schemas/Organization/FoundationFek"
+          },
+          "mainAddress": {
+            "$ref": "#/components/schemas/Organization/Address"
+          },
           "secondaryAddresses": {
             "type": "array",
-            "items": { "$ref": "#/components/subschemas/Address" }
+            "items": { "$ref": "#/components/schemas/Organization/Address" }
           }
         },
+
+        "Spatial": {
+          "type": "object",
+          "properties": {
+            "countryId": { "type": "integer" },
+            "cityId": { "type": "integer" }
+          }
+        },
+
+        "ContactPoint": {
+          "type": "object",
+          "properties": {
+            "email": { "type": "string", "format": "email" },
+            "telephone": { "type": "string" }
+          }
+        },
+
+        "FoundationFek": {
+          "type": "object",
+          "properties": {
+            "year": { "type": "integer" },
+            "number": { "type": "string" },
+            "issue": { "type": "string" }
+          }
+        },
+
+        "Address": {
+          "type": "object",
+          "properties": {
+            "fullAddress": { "type": "string" },
+            "postCode": { "type": "string" },
+            "adminUnitLevel1": { "type": "integer" },
+            "adminUnitLevel2": { "type": "integer" }
+          }
+        },
+
         "required": ["code"]
-      }
-    },
-
-    "subschemas": {
-      "Spatial": {
-        "type": "object",
-        "properties": {
-          "countryId": { "type": "integer" },
-          "cityId": { "type": "integer" }
-        }
-      },
-
-      "ContactPoint": {
-        "type": "object",
-        "properties": {
-          "email": { "type": "string", "format": "email" },
-          "telephone": { "type": "string" }
-        }
-      },
-
-      "FoundationFek": {
-        "type": "object",
-        "properties": {
-          "year": { "type": "integer" },
-          "number": { "type": "string" },
-          "issue": { "type": "string" }
-        }
-      },
-
-      "Address": {
-        "type": "object",
-        "properties": {
-          "fullAddress": { "type": "string" },
-          "postCode": { "type": "string" },
-          "adminUnitLevel1": { "type": "integer" },
-          "adminUnitLevel2": { "type": "integer" }
-        }
       }
     }
   }

@@ -1,4 +1,3 @@
-from src import r
 from src.apografi.constants import (
     APOGRAFI_DICTIONARIES_URL,
     APOGRAFI_DICTIONARIES,
@@ -7,7 +6,9 @@ from src.apografi.constants import (
 )
 from src.models.apografi import Dictionary, Organization
 import requests
-import sys
+import redis
+
+r = redis.Redis()
 
 
 def apografi_dictionary_get(endpoint):
@@ -57,7 +58,6 @@ def sync_organizations():
             f"{APOGRAFI_ORGANIZATIONS_URL}/{organization_code}", headers=headers
         )
         organization = response.json()["data"]
-        # print(f"ORGANIZATION\n{organization}")
 
         doc = {k: v for k, v in organization.items() if v}
         print(doc["code"])

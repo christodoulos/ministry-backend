@@ -1,8 +1,12 @@
-from src import db, r
 import mongoengine as me
+import redis
+
+r = redis.Redis(
+    # host=environ.get("REDIS_HOST"), port=int(environ.get("REDIS_PORT")), db=0
+)
 
 
-class Dictionary(db.Document):
+class Dictionary(me.Document):
     apografi_id = me.IntField(required=True, db_field="id")
     parentId = me.IntField()
     code = me.StringField(required=True)
@@ -39,7 +43,7 @@ class Address(me.EmbeddedDocument):
     adminUnitLevel2 = me.IntField()
 
 
-class Organization(db.Document):
+class Organization(me.Document):
     code = me.StringField(required=True, unique=True)
     preferredLabel = me.StringField()
     alternativeLabels = me.ListField(me.StringField())

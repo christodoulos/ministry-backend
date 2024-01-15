@@ -1,37 +1,27 @@
 from flask import Flask
-from flask_mongoengine import MongoEngine
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 from os import environ, path
 from dotenv import load_dotenv
-import redis
+from mongoengine import connect
 
 basedir = path.abspath(path.dirname(__file__))
 load_dotenv(path.join(basedir, ".env"))
 
 app = Flask(__name__)
 
-# MongoEngine configuration
-app.config["MONGODB_SETTINGS"] = [
-    {
-        "db": "apografi",
-        "host": environ.get("MONGODB_HOST"),
-        "port": int(environ.get("MONGODB_PORT")),
-        "alias": "apografi",
-    },
-    {
-        "db": "ypes",
-        "host": environ.get("MONGODB_HOST"),
-        "port": int(environ.get("MONGODB_PORT")),
-        "alias": "ypes",
-    },
-]
-db = MongoEngine()
-db.init_app(app)
+connect(
+    db="apografi",
+    host=environ.get("MONGODB_HOST"),
+    port=int(environ.get("MONGODB_PORT")),
+    alias="apografi",
+)
 
-# Redis configuration
-r = redis.Redis(
-    host=environ.get("REDIS_HOST"), port=int(environ.get("REDIS_PORT")), db=0
+connect(
+    db="ypes",
+    host=environ.get("MONGODB_HOST"),
+    port=int(environ.get("MONGODB_PORT")),
+    alias="ypes",
 )
 
 # CORS configuration
