@@ -1,5 +1,3 @@
-import json
-import re
 import sys
 from src.apografi.constants import (
     APOGRAFI_DICTIONARIES_URL,
@@ -15,6 +13,8 @@ from src.models.apografi import (
     OrganizationalUnit,
     Address,
     Spatial,
+    ContactPoint,
+    FoundationFek,
 )
 import requests
 import redis
@@ -32,7 +32,7 @@ def apografi_dictionary_get(endpoint):
 
 def sync_apografi_dictionaries():
     print("Συγχρονισμός λεξικών από την Απογραφή...")
-    entity = "dictionary"
+
     for dictionary in APOGRAFI_DICTIONARIES.keys():
         for item in apografi_dictionary_get(dictionary):
             doc = {
@@ -62,10 +62,15 @@ def sync_apografi_dictionaries():
                     for key, value in doc.items():
                         setattr(existing, key, value)
                     existing.save()
-                    Log(entity=entity, action="update", doc_id=doc_id, value=doc).save()
+                    Log(
+                        entity="dictionary", action="update", doc_id=doc_id, value=diff
+                    ).save()
             else:
                 Dictionary(**doc).save()
-                Log(entity=entity, action="insert", doc_id=doc_id, value=doc).save()
+                Log(
+                    entity="dictionary", action="insert", doc_id=doc_id, value=doc
+                ).save()
+
     print("Τέλος συγχρονισμού λεξικών από την Απογραφή.")
 
 
@@ -83,6 +88,7 @@ def cache_dictionaries():
 
 def sync_organizations():
     print("Συγχρονισμός φορέων από την Απογραφή...")
+
     headers = {"Accept": "application/json"}
     response = requests.get(APOGRAFI_ORGANIZATIONS_URL, headers=headers)
     for item in response.json()["data"]:
@@ -94,13 +100,45 @@ def sync_organizations():
         organization = response.json()["data"]
 
         doc = {k: v for k, v in organization.items() if v}
-        print(doc["code"])
+        doc_id = doc["code"]
 
-        Organization(**doc).save()
-        # try:
-        #     Organization(**doc).save()
-        # except Exception as e:
-        #     pass
+        for key, value in doc.items():
+            if key == "spatial":
+                value = [Spatial(**item) for item in value]
+                doc[key] = value
+            if key == "contactPoint":
+                value = ContactPoint(**value)
+                doc[key] = value
+            if key == "foundationFek":
+                value = FoundationFek(**value)
+                doc[key] = value
+            if key in ["mainAddress", "secondaryAddresses"]:
+                if isinstance(value, list):
+                    value = [Address(**item) for item in value]
+                else:
+                    value = Address(**value)
+                doc[key] = value
+
+        existing = Organization.objects(code=doc["code"]).first()
+
+        if existing:
+            existing_dict = existing.to_mongo().to_dict()
+            existing_dict.pop("_id")
+            new_doc = Organization(**doc).to_mongo().to_dict()
+            diff = DeepDiff(existing_dict, new_doc)
+            if diff:
+                print(diff)
+                sys.exit()
+                for key, value in doc.items():
+                    setattr(existing, key, value)
+                existing.save()
+                Log(
+                    entity="organization", action="update", doc_id=doc_id, value=diff
+                ).save()
+        else:
+            Organization(**doc).save()
+            Log(entity="organization", action="insert", doc_id=doc_id, value=doc).save()
+
     print("Τέλος συγχρονισμού φορέων από την Απογραφή.")
 
 
@@ -163,43 +201,53 @@ def sync_organizational_units():
             headers=headers,
         )
 
-        if response.status_code != 404 and hasattr(response.json(), "data"):
+        if response.status_code != 404:
             units = response.json()["data"]
 
             for unit in units:
                 print(f"\t{unit['code']} {unit['preferredLabel']}\n")
 
                 doc = {k: v for k, v in unit.items() if v}
+                doc_id = doc["code"]
 
                 for key, value in doc.items():
+                    if key == "spatial":
+                        value = [Spatial(**item) for item in value]
+                        doc[key] = value
                     if key in ["mainAddress", "secondaryAddresses"]:
-                        # If the key is 'mainAddress' or 'secondaryAddresses',
-                        # we need to create Address instances
                         if isinstance(value, list):
                             value = [Address(**item) for item in value]
                         else:
                             value = Address(**value)
                         doc[key] = value
-                    if key in ["spatial"]:
-                        # If the key is 'spatial',
-                        # we need to create Spatial instances
-                        if isinstance(value, list):
-                            value = [Spatial(**item) for item in value]
-                        else:
-                            value = Spatial(**value)
-                        doc[key] = value
 
                 existing = OrganizationalUnit.objects(code=doc["code"]).first()
                 if existing:
-                    for key, value in doc.items():
-                        setattr(existing, key, value)
-                    try:
-                        existing.save()
-                    except me.ValidationError as e:
-                        print(e.to_dict())
+                    existing_dict = existing.to_mongo().to_dict()
+                    existing_dict.pop("_id")
+                    new_doc = OrganizationalUnit(**doc).to_mongo().to_dict()
+                    diff = DeepDiff(existing_dict, new_doc)
+                    if diff:
+                        print(diff)
+                        sys.exit()
+                        for key, value in doc.items():
+                            setattr(existing, key, value)
+                        try:
+                            existing.save()
+                        except me.ValidationError as e:
+                            print(e.to_dict())
+                        Log(
+                            entity="organizational-unit",
+                            action="update",
+                            doc_id=doc_id,
+                            value=diff,
+                        ).save()
                 else:
-                    try:
-                        OrganizationalUnit(**doc).save()
-                    except me.ValidationError as e:
-                        print(e.to_dict())
+                    OrganizationalUnit(**doc).save()
+                    Log(
+                        entity="organizational-unit",
+                        action="insert",
+                        doc_id=doc_id,
+                        value=doc,
+                    ).save()
     print("Τέλος συγχρονισμού οργανωτικών μονάδων από την Απογραφή.")

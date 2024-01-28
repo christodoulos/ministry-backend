@@ -1,3 +1,4 @@
+import re
 import mongoengine as me
 from datetime import datetime
 import redis
@@ -83,7 +84,7 @@ class Organization(me.Document):
     subOrganizationOf = me.StringField()
     organizationType = me.IntField()
     description = me.StringField()
-    url = me.URLField()
+    url = me.StringField()
     contactPoint = me.EmbeddedDocumentField(ContactPoint)
     vatId = me.StringField()
     status = me.StringField()
@@ -96,30 +97,41 @@ class Organization(me.Document):
     secondaryAddresses = me.ListField(me.EmbeddedDocumentField(Address))
 
     def clean(self):
-        if self.url and not self.url.startswith("http"):
-            self.url = "http://" + self.url
+        print(f"Checking organization {self.code} {self.preferredLabel}")
         if self.purpose:
+            print("Checking purpose")
             for id in self.purpose:
-                if not r.sismember("Function", id):
+                if not r.sismember("Functions", id):
                     raise me.ValidationError(f"Λάθος τιμή στο πεδίο purpose: {id}")
         if self.spatial:
+            print("Checking spatial")
             for spatial in self.spatial:
-                if not r.sismember("Country", spatial.countryId):
+                if (
+                    hasattr(spatial, "countryId")
+                    and spatial.cityId is not None
+                    and not r.sismember("Countries", spatial.countryId)
+                ):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο spatial.countryId: {spatial.countryId}"
                     )
-                if not r.sismember("City", spatial.cityId):
+                if (
+                    hasattr(spatial, "cityId")
+                    and spatial.cityId is not None
+                    and not r.sismember("Cities", spatial.cityId)
+                ):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο spatial.cityId: {spatial.cityId}"
                     )
-        if not r.sismember("OrganizationType", self.organizationType):
+        if not r.sismember("OrganizationTypes", self.organizationType):
+            print("Checking organizationType")
             raise me.ValidationError(
                 f"Λάθος τιμή στο πεδίο organizationType: {self.organizationType}"
             )
         if self.mainAddress:
+            print("Checking mainAddress")
             if self.mainAddress.adminUnitLevel1:
                 if not r.sismember(
-                    "Country",
+                    "Countries",
                     str(self.mainAddress.adminUnitLevel1).encode("utf-8"),
                 ):
                     raise me.ValidationError(
@@ -127,22 +139,23 @@ class Organization(me.Document):
                     )
             if self.mainAddress.adminUnitLevel2:
                 if not r.sismember(
-                    "City",
+                    "Cities",
                     str(self.mainAddress.adminUnitLevel2).encode("utf-8"),
                 ):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο address.adminUnitLevel2: {self.mainAddress.adminUnitLevel2}"
                     )
         if self.secondaryAddresses:
+            print("Checking secondaryAddresses")
             for address in self.secondaryAddresses:
                 if address.adminUnitLevel1 and not r.sismember(
-                    "Country", str(address.adminUnitLevel1).encode("utf-8")
+                    "Countries", str(address.adminUnitLevel1).encode("utf-8")
                 ):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο address.adminUnitLevel1: {address.adminUnitLevel1}"
                     )
                 if address.adminUnitLevel2 and not r.sismember(
-                    "City", str(address.adminUnitLevel2).encode("utf-8")
+                    "Cities", str(address.adminUnitLevel2).encode("utf-8")
                 ):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο address.adminUnitLevel2: {address.adminUnitLevel2}"
@@ -154,7 +167,7 @@ class Organization(me.Document):
 
 class OrganizationalUnit(me.Document):
     meta = {
-        "collection": "organizationalUnits",
+        "collection": "organizational-units",
         "db_alias": "apografi",
     }
 
@@ -170,19 +183,16 @@ class OrganizationalUnit(me.Document):
     description = me.StringField()
     email = me.EmailField()
     telephone = me.StringField()
-    url = me.URLField()
+    url = me.StringField()
     mainAddress = me.EmbeddedDocumentField(Address)
     secondaryAddresses = me.ListField(me.EmbeddedDocumentField(Address))
 
     def clean(self):
-        if self.url and not self.url.startswith("http"):
-            print("Checking url")
-            self.url = "http://" + self.url
         if self.purpose:
             print("Checking purpose")
             print(self.purpose)
             for id in self.purpose:
-                if not r.sismember("Function", id):
+                if not r.sismember("Functions", id):
                     print(
                         f"Λάθος τιμή στο πεδίο purpose: {id} στη μονάδα {self.code} {self.preferredLabel}"
                     )
@@ -195,7 +205,7 @@ class OrganizationalUnit(me.Document):
                 if (
                     hasattr(spatial, "countryId")
                     and spatial.cityId is not None
-                    and not r.sismember("Country", spatial.countryId)
+                    and not r.sismember("Countries", spatial.countryId)
                 ):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο spatial.countryId: {spatial.countryId}"
@@ -203,16 +213,19 @@ class OrganizationalUnit(me.Document):
                 if (
                     hasattr(spatial, "cityId")
                     and spatial.cityId is not None
-                    and not r.sismember("City", spatial.cityId)
+                    and not r.sismember("Cities", spatial.cityId)
                 ):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο spatial.cityId: {spatial.cityId}"
                     )
+        if not r.sismember("UnitTypes", self.unitType):
+            print("Checking unitType")
+            raise me.ValidationError(f"Λάθος τιμή στο πεδίο unitType: {self.unitType}")
         if self.mainAddress:
             print("Checking mainAddress")
             if self.mainAddress.adminUnitLevel1:
                 if not r.sismember(
-                    "Country",
+                    "Countries",
                     str(self.mainAddress.adminUnitLevel1).encode("utf-8"),
                 ):
                     raise me.ValidationError(
@@ -220,7 +233,7 @@ class OrganizationalUnit(me.Document):
                     )
             if self.mainAddress.adminUnitLevel2:
                 if not r.sismember(
-                    "City",
+                    "Cities",
                     str(self.mainAddress.adminUnitLevel2).encode("utf-8"),
                 ):
                     raise me.ValidationError(
@@ -230,13 +243,13 @@ class OrganizationalUnit(me.Document):
             print("Checking secondaryAddresses")
             for address in self.secondaryAddresses:
                 if address.adminUnitLevel1 and not r.sismember(
-                    "Country", str(address.adminUnitLevel1).encode("utf-8")
+                    "Countries", str(address.adminUnitLevel1).encode("utf-8")
                 ):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο address.adminUnitLevel1: {address.adminUnitLevel1}"
                     )
                 if address.adminUnitLevel2 and not r.sismember(
-                    "City", str(address.adminUnitLevel2).encode("utf-8")
+                    "Cities", str(address.adminUnitLevel2).encode("utf-8")
                 ):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο address.adminUnitLevel2: {address.adminUnitLevel2}"
