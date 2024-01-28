@@ -3,6 +3,7 @@ import json
 
 from src.models.apografi import Dictionary, Organization
 
+
 apografi = Blueprint("apografi", __name__)
 
 # Dictionary Routes

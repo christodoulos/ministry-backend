@@ -3,12 +3,19 @@ from src.apografi.constants import (
     APOGRAFI_DICTIONARIES,
     APOGRAFI_DICTIONARIES_SINGULAR,
     APOGRAFI_ORGANIZATIONS_URL,
+    APOGRAFI_ORGANIZATIONAL_UNITS_URL,
+    APOGRAFI_ORGANIZATION_TREE_URL,
 )
-from src.models.apografi import Dictionary, Organization
+from src.models.apografi import (
+    Dictionary,
+    Organization,
+    OrganizationalUnit,
+    Address,
+    Spatial,
+)
 import requests
 import redis
-
-r = redis.Redis()
+import mongoengine as me
 
 
 def apografi_dictionary_get(endpoint):
@@ -38,6 +45,7 @@ def sync_apografi_dictionaries():
 
 
 def cache_dictionaries():
+    r = redis.Redis()
     print("Καταχώρηση λεξικών στην μνήμη...")
     for dictionary in APOGRAFI_DICTIONARIES_SINGULAR.values():
         r.delete(dictionary)
@@ -67,3 +75,104 @@ def sync_organizations():
         except Exception as e:
             pass
     print("Τέλος συγχρονισμού φορέων από την Απογραφή.")
+
+
+def sync_organization_units(organization_code):
+    print(
+        f"Συγχρονισμός οργανωτικών μονάδων του φορέα {organization_code} από την Απογραφή..."
+    )
+    headers = {"Accept": "application/json"}
+    response = requests.get(
+        f"{APOGRAFI_ORGANIZATIONAL_UNITS_URL}{organization_code}", headers=headers
+    )
+
+    print(len(response.json()))
+    print(len(response.json()["data"]))
+    for unit in response.json()["data"]:
+        print(unit["code"])
+        doc = {k: v for k, v in unit.items() if v}
+
+        for key, value in doc.items():
+            if key in ["mainAddress", "secondaryAddresses"]:
+                # If the key is 'mainAddress' or 'secondaryAddresses',
+                # we need to create Address instances
+                if isinstance(value, list):
+                    value = [Address(**item) for item in value]
+                else:
+                    value = Address(**value)
+                doc[key] = value
+            if key in ["spatial"]:
+                print("VALUE", value)
+                # If the key is 'spatial',
+                # we need to create Spatial instances
+                if isinstance(value, list):
+                    value = [Spatial(**item) for item in value]
+                else:
+                    value = Spatial(**value)
+                doc[key] = value
+
+        existing = OrganizationalUnit.objects(code=doc["code"]).first()
+        if existing:
+            for key, value in doc.items():
+                setattr(existing, key, value)
+            try:
+                existing.save()
+            except me.ValidationError as e:
+                print(e.to_dict())
+        else:
+            try:
+                OrganizationalUnit(**doc).save()
+            except me.ValidationError as e:
+                print(e.to_dict())
+
+
+def sync_organizational_units():
+    print("Συγχρονισμός οργανωτικών μονάδων από την Απογραφή...")
+    headers = {"Accept": "application/json"}
+    for organization in Organization.objects():
+        print(f"{organization['code']} {organization['preferredLabel']}\n")
+        response = requests.get(
+            f"{APOGRAFI_ORGANIZATIONAL_UNITS_URL}{organization['code']}",
+            headers=headers,
+        )
+
+        if response.status_code != 404 and hasattr(response.json(), "data"):
+            units = response.json()["data"]
+
+            for unit in units:
+                print(f"\t{unit['code']} {unit['preferredLabel']}\n")
+
+                doc = {k: v for k, v in unit.items() if v}
+
+                for key, value in doc.items():
+                    if key in ["mainAddress", "secondaryAddresses"]:
+                        # If the key is 'mainAddress' or 'secondaryAddresses',
+                        # we need to create Address instances
+                        if isinstance(value, list):
+                            value = [Address(**item) for item in value]
+                        else:
+                            value = Address(**value)
+                        doc[key] = value
+                    if key in ["spatial"]:
+                        # If the key is 'spatial',
+                        # we need to create Spatial instances
+                        if isinstance(value, list):
+                            value = [Spatial(**item) for item in value]
+                        else:
+                            value = Spatial(**value)
+                        doc[key] = value
+
+                existing = OrganizationalUnit.objects(code=doc["code"]).first()
+                if existing:
+                    for key, value in doc.items():
+                        setattr(existing, key, value)
+                    try:
+                        existing.save()
+                    except me.ValidationError as e:
+                        print(e.to_dict())
+                else:
+                    try:
+                        OrganizationalUnit(**doc).save()
+                    except me.ValidationError as e:
+                        print(e.to_dict())
+    print("Τέλος συγχρονισμού οργανωτικών μονάδων από την Απογραφή.")

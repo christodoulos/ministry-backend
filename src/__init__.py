@@ -1,4 +1,5 @@
 from flask import Flask
+
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 from mongoengine import connect
@@ -7,7 +8,6 @@ app = Flask(__name__)
 
 connect(db="apografi", alias="apografi")
 
-connect(db="ypes", alias="ypes")
 
 # CORS configuration
 cors = CORS(
@@ -36,4 +36,4 @@ app.register_blueprint(apografi, url_prefix="/apografi")
 # Cache dictionaries
 from src.apografi.lib import cache_dictionaries  # noqa: E402
 
-cache_dictionaries()
+# cache_dictionaries()
