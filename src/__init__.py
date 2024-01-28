@@ -31,9 +31,3 @@ from src.blueprints.apografi import apografi  # noqa: E402
 
 # Register blueprints
 app.register_blueprint(apografi, url_prefix="/apografi")
-
-
-# Cache dictionaries
-from src.apografi.lib import cache_dictionaries  # noqa: E402
-
-# cache_dictionaries()

@@ -1,12 +1,15 @@
+import json
+import re
+import sys
 from src.apografi.constants import (
     APOGRAFI_DICTIONARIES_URL,
     APOGRAFI_DICTIONARIES,
-    APOGRAFI_DICTIONARIES_SINGULAR,
     APOGRAFI_ORGANIZATIONS_URL,
     APOGRAFI_ORGANIZATIONAL_UNITS_URL,
     APOGRAFI_ORGANIZATION_TREE_URL,
 )
 from src.models.apografi import (
+    Log,
     Dictionary,
     Organization,
     OrganizationalUnit,
@@ -16,6 +19,7 @@ from src.models.apografi import (
 import requests
 import redis
 import mongoengine as me
+from deepdiff import DeepDiff
 
 
 def apografi_dictionary_get(endpoint):
@@ -28,31 +32,53 @@ def apografi_dictionary_get(endpoint):
 
 def sync_apografi_dictionaries():
     print("Συγχρονισμός λεξικών από την Απογραφή...")
+    entity = "dictionary"
     for dictionary in APOGRAFI_DICTIONARIES.keys():
         for item in apografi_dictionary_get(dictionary):
             doc = {
-                "code": APOGRAFI_DICTIONARIES_SINGULAR[dictionary],
+                "code": dictionary,
                 "code_el": APOGRAFI_DICTIONARIES[dictionary],
                 "apografi_id": item["id"],
-                "parentId": item["parentId"] if "parentId" in item else None,
                 "description": item["description"],
             }
-            try:
+            if "parentId" in item:
+                doc["parentId"] = item["parentId"]
+            doc_id = f"{dictionary}:{item['id']}:{item['description']}"
+
+            existing = Dictionary.objects(
+                code=dictionary,
+                apografi_id=item["id"],
+                description=item["description"],
+            ).first()
+
+            if existing:
+                existing_dict = existing.to_mongo().to_dict()
+                existing_dict.pop("_id")
+                diff = DeepDiff(
+                    existing_dict,
+                    doc,
+                )
+                if diff:
+                    for key, value in doc.items():
+                        setattr(existing, key, value)
+                    existing.save()
+                    Log(entity=entity, action="update", doc_id=doc_id, value=doc).save()
+            else:
                 Dictionary(**doc).save()
-            except Exception as e:
-                pass
+                Log(entity=entity, action="insert", doc_id=doc_id, value=doc).save()
     print("Τέλος συγχρονισμού λεξικών από την Απογραφή.")
 
 
 def cache_dictionaries():
     r = redis.Redis()
-    print("Καταχώρηση λεξικών στην μνήμη...")
-    for dictionary in APOGRAFI_DICTIONARIES_SINGULAR.values():
+    print("Καταχώρηση λεξικών στην cache...")
+    for dictionary in APOGRAFI_DICTIONARIES.keys():
         r.delete(dictionary)
         docs = Dictionary.objects(code=dictionary)
-        ids = set([doc["id"] for doc in docs])
+        ids = set([doc["apografi_id"] for doc in docs])
+        print(ids)
         r.sadd(dictionary, *ids)
-    print("Τέλος καταχώρησης λεξικών στην μνήμη.")
+    print("Τέλος καταχώρησης λεξικών στην cache.")
 
 
 def sync_organizations():
@@ -70,10 +96,11 @@ def sync_organizations():
         doc = {k: v for k, v in organization.items() if v}
         print(doc["code"])
 
-        try:
-            Organization(**doc).save()
-        except Exception as e:
-            pass
+        Organization(**doc).save()
+        # try:
+        #     Organization(**doc).save()
+        # except Exception as e:
+        #     pass
     print("Τέλος συγχρονισμού φορέων από την Απογραφή.")
 
 

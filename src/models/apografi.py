@@ -1,8 +1,28 @@
 import mongoengine as me
+from datetime import datetime
 import redis
-from pprint import pprint
 
 r = redis.Redis()
+
+# A model that logs changes during synchronization of dictionaries,organizations and organizational units
+
+
+class Log(me.Document):
+    meta = {
+        "collection": "synclog",
+        "db_alias": "apografi",
+    }
+
+    date = me.DateTimeField(default=datetime.now())
+    entity = me.StringField(
+        required=True, choices=["dictionary", "organization", "organizational-unit"]
+    )
+    action = me.StringField(required=True, choices=["insert", "update"])
+    doc_id = me.StringField(required=True)
+    value = me.DictField(required=True)
+
+
+# A model for every dictionary from https://hr.apografi.gov.gr/api.html#genikes-plhrofories-le3ika
 
 
 class Dictionary(me.Document):
@@ -12,11 +32,14 @@ class Dictionary(me.Document):
         "indexes": [{"fields": ["apografi_id", "code", "description"], "unique": True}],
     }
 
-    apografi_id = me.IntField(required=True, db_field="id")
+    apografi_id = me.IntField(required=True)
     parentId = me.IntField()
     code = me.StringField(required=True)
     code_el = me.StringField(required=True)
     description = me.StringField(required=True)
+
+
+# Embeddable documents for the Organization model
 
 
 class Spatial(me.EmbeddedDocument):
@@ -40,6 +63,9 @@ class Address(me.EmbeddedDocument):
     postCode = me.StringField()
     adminUnitLevel1 = me.IntField()
     adminUnitLevel2 = me.IntField()
+
+
+# A model for every organization from https://hr.apografi.gov.gr/api.html#genikes-plhrofories-foreis
 
 
 class Organization(me.Document):
@@ -121,6 +147,9 @@ class Organization(me.Document):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο address.adminUnitLevel2: {address.adminUnitLevel2}"
                     )
+
+
+# A model for every organizational unit from https://hr.apografi.gov.gr/api.html#genikes-plhrofories-monades
 
 
 class OrganizationalUnit(me.Document):

@@ -4,7 +4,7 @@
   "info": {
     "title": "Υπουργείο Εσωτερικών",
     "version": "0.0.1",
-    "description": "Το API του Υπουργείου Εσωτερικών παρέχει δεδομένα από την Απογραφή Φορέων και Επιχειρήσεων του Υπουργείου Εσωτερικών (https://t.ly/dWBz1). Τα δεδομένα είναι διαθέσιμα σε μορφή JSON και είναι ενημερωμένα ημερήσια. Το API είναι διαθέσιμο στη διεύθυνση https://apografi.gov.gr/api/v1",
+    "description": "Τεκμηρίωση του API της εφαρμογής.",
     "contact": {
       "name": "Υπουργείο Εσωτερικών",
       "url": "https://www.ypes.gr",
@@ -119,7 +119,7 @@
             "name": "dictionary",
             "in": "path",
             "required": true,
-            "description": "Το όνομα (ενικός) του λεξικού από την απογραφή (https://t.ly/dWBz1)",
+            "description": "Το όνομα του λεξικού από την απογραφή (https://t.ly/dWBz1)",
             "schema": { "type": "string" }
           }
         ],
@@ -157,7 +157,7 @@
             "name": "dictionary",
             "in": "path",
             "required": true,
-            "description": "Το όνομα (ενικός) του λεξικού από την απογραφή (https://t.ly/dWBz1)",
+            "description": "Το όνομα του λεξικού από την απογραφή (https://t.ly/dWBz1)",
             "schema": { "type": "string" }
           }
         ],

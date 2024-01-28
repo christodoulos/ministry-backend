@@ -20,22 +20,6 @@ APOGRAFI_DICTIONARIES = {
     "Cities": "Δήμοι",
 }
 
-APOGRAFI_DICTIONARIES_SINGULAR = {
-    "OrganizationTypes": "OrganizationType",
-    "OrganizationCategories": "OrganizationCategory",
-    "EmploymentTypes": "EmploymentType",
-    "EmployeeCategories": "EmployeeCategory",
-    "SupervisorPositions": "SupervisorPosition",
-    "UnitTypes": "UnitType",
-    "Functions": "Function",
-    "FunctionalAreas": "FunctionalArea",
-    "ProfessionCategories": "ProfessionCategory",
-    "Specialities": "Speciality",
-    "EducationTypes": "EducationType",
-    "Countries": "Country",
-    "Cities": "City",
-}
-
 # https://hr.apografi.gov.gr/api.html#genikes-plhrofories-foreis
 
 APOGRAFI_ORGANIZATIONS_URL = f"{APOGRAFI_API_URL}/public/organizations"
