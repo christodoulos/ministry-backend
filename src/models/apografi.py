@@ -73,6 +73,7 @@ class Organization(me.Document):
     meta = {
         "collection": "organizations",
         "db_alias": "apografi",
+        "indexes": ["preferredLabel"],
     }
 
     code = me.StringField(required=True, unique=True)
@@ -169,6 +170,7 @@ class OrganizationalUnit(me.Document):
     meta = {
         "collection": "organizational-units",
         "db_alias": "apografi",
+        "indexes": ["organizationCode", "supervisorUnitCode", "preferredLabel"],
     }
 
     code = me.StringField(required=True, unique=True)

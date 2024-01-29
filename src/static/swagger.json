@@ -4,11 +4,11 @@
   "info": {
     "title": "Υπουργείο Εσωτερικών",
     "version": "0.0.1",
-    "description": "Τεκμηρίωση του API της εφαρμογής.",
+    "description": "Τεκμηρίωση του API τoυ συατήματος παρακολούθησης αρμοδιοτήτων μεταξύ των φορέων της Δημόσιας Διοίκησης.",
     "contact": {
       "name": "Υπουργείο Εσωτερικών",
       "url": "https://www.ypes.gr",
-      "email": "  "
+      "email": "antpsarakis@gmail.com"
     },
     "license": {
       "name": "Άδεια Χρήσης",
@@ -31,6 +31,14 @@
       "externalDocs": {
         "description": "Φορείς Απογραφής",
         "url": "https://t.ly/gIFkc"
+      }
+    },
+    {
+      "name": "Δεδομένα Απογραφής - Μονάδες",
+      "description": "Μονάδες που συγχρονίζονται ημερήσια από το API της Απογραφής",
+      "externalDocs": {
+        "description": "Μονάδες Απογραφής",
+        "url": "https://t.ly/wX3Dc"
       }
     }
   ],
@@ -225,6 +233,236 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/apografi/organization/{code}/units": {
+      "get": {
+        "summary": "Επιστρέφει τις μονάδες του φορέα με τον κωδικό code",
+        "tags": ["Δεδομένα Απογραφής - Μονάδες"],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "description": "Ο κωδικός του φορέα",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Οι μονάδες του φορέα βρέθηκαν",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "units": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Δεν βρέθηκαν μονάδες ή ο κωδικός του φορέα δεν υπάρχει",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/apografi/organization/{code}/general-directorates": {
+      "get": {
+        "summary": "Επιστρέφει τις Γενικές Διευθύνσεις του φορέα με τον κωδικό code",
+        "tags": ["Δεδομένα Απογραφής - Μονάδες"],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "description": "Ο κωδικός του φορέα",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Οι Γενικές Διευθύνσεις του φορέα βρέθηκαν",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "units": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Δεν βρέθηκαν Γενικές Διευθύνσεις ή ο κωδικός του φορέα δεν υπάρχει",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/apografi/organization/{code}/{gen_dir_code}/directorates": {
+      "get": {
+        "summary": "Επιστρέφει τις Διευθύνσεις του φορέα με τον κωδικό code που υπάγονται στη Γενική Διεύθυνση με τον κωδικό gen_dir_code",
+        "tags": ["Δεδομένα Απογραφής - Μονάδες"],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "description": "Ο κωδικός του φορέα",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "gen_dir_code",
+            "in": "path",
+            "required": true,
+            "description": "Ο κωδικός της Γενικής Διεύθυνσης",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Οι Διευθύνσεις της Γενικής Διευθύνσης του φορέα βρέθηκαν",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "units": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Δεν υπάρχουν αποτελέσματα ή ο κωδικός του φορέα ή της Γενικής Διεύθυνσης δεν υπάρχει",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/apografi/organization/{code}/{dir_code}/departments": {
+      "get": {
+        "summary": "Επιστρέφει τα τμήματα του φορέα με τον κωδικό code που υπάγονται στη Διεύθυνση με τον κωδικό dir_code",
+        "tags": ["Δεδομένα Απογραφής - Μονάδες"],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "description": "Ο κωδικός του φορέα",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dir_code",
+            "in": "path",
+            "required": true,
+            "description": "Ο κωδικός της Διεύθυνσης",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Τα τμήματα της Διευθύνσης του φορέα βρέθηκαν",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "units": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Δεν υπάρχουν αποτελέσματα ή ο κωδικός του φορέα ή της Διεύθυνσης δεν υπάρχει",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
