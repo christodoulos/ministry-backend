@@ -1,7 +1,8 @@
-import re
+import json
 import mongoengine as me
 from datetime import datetime
 import redis
+from .utils import JSONEncoder
 
 r = redis.Redis()
 
@@ -9,10 +10,7 @@ r = redis.Redis()
 
 
 class Log(me.Document):
-    meta = {
-        "collection": "synclog",
-        "db_alias": "apografi",
-    }
+    meta = {"collection": "synclog", "db_alias": "apografi"}
 
     date = me.DateTimeField(default=datetime.now())
     entity = me.StringField(
@@ -97,13 +95,177 @@ class Organization(me.Document):
     mainAddress = me.EmbeddedDocumentField(Address)
     secondaryAddresses = me.ListField(me.EmbeddedDocumentField(Address))
 
+    def to_mongo_dict(self):
+        mongo_dict = self.to_mongo().to_dict()
+        mongo_dict.pop("_id")
+        return mongo_dict
+
+    @property
+    def organizationTypeDetails(self):
+        id = self.organizationType
+        return {
+            "id": id,
+            "description": Dictionary.objects(code="OrganizationTypes", apografi_id=id)
+            .first()
+            .description,
+        }
+
+    @property
+    def purposeDetails(self):
+        ids = self.purpose
+        return [
+            {
+                "id": id,
+                "description": Dictionary.objects(code="Functions", apografi_id=id)
+                .first()
+                .description,
+            }
+            for id in ids
+        ]
+
+    @property
+    def spatialDetails(self):
+        return [
+            {
+                key: value
+                for key, value in {
+                    "countryId": spatial.countryId,
+                    "countryDescription": Dictionary.objects(
+                        code="Countries", apografi_id=spatial.countryId
+                    )
+                    .first()
+                    .description
+                    if spatial.countryId is not None
+                    else None,
+                    "cityId": spatial.cityId,
+                    "cityDescription": Dictionary.objects(
+                        code="Cities", apografi_id=spatial.cityId
+                    )
+                    .first()
+                    .description
+                    if spatial.cityId is not None
+                    else None,
+                }.items()
+                if value is not None
+            }
+            for spatial in self.spatial
+        ]
+
+    @property
+    def subOrganizationOfDetails(self):
+        if not self.subOrganizationOf:
+            return None
+        else:
+            id = self.subOrganizationOf
+            return {
+                "id": id,
+                "description": Organization.objects(code=id).first().preferredLabel,
+            }
+
+    @property
+    def mainAddressDetails(self):
+        if not self.mainAddress:
+            return None
+        else:
+            address = self.mainAddress
+
+            try:
+                id1 = self.mainAddress.adminUnitLevel1
+            except AttributeError:
+                id1 = None
+
+            try:
+                id2 = self.mainAddress.adminUnitLevel2
+            except AttributeError:
+                id2 = None
+
+            adminUnitLevel1 = (
+                {
+                    "id": id1,
+                    "description": Dictionary.objects(code="Countries", apografi_id=id1)
+                    .first()
+                    .description,
+                }
+                if id1 is not None
+                else None
+            )
+
+            adminUnitLevel2 = (
+                {
+                    "id": id2,
+                    "description": Dictionary.objects(code="Cities", apografi_id=id2)
+                    .first()
+                    .description,
+                }
+                if id2 is not None
+                else None
+            )
+
+            return {
+                "fullAddress": address.fullAddress,
+                "postCode": address.postCode,
+                "adminUnitLevel1": adminUnitLevel1,
+                "adminUnitLevel2": adminUnitLevel2,
+            }
+
+    @property
+    def secondaryAddressesDetails(self):
+        addresses = self.secondaryAddresses
+        return [
+            {
+                "fullAddress": address.fullAddress,
+                "postCode": address.postCode,
+                "adminUnitLevel1": {
+                    "id": address.adminUnitLevel1,
+                    "description": Dictionary.objects(
+                        code="Countries", apografi_id=address.adminUnitLevel1
+                    )
+                    .first()
+                    .description,
+                }
+                if address.adminUnitLevel1 is not None
+                else None,
+                "adminUnitLevel2": {
+                    "id": address.adminUnitLevel2,
+                    "description": Dictionary.objects(
+                        code="Cities", apografi_id=address.adminUnitLevel2
+                    )
+                    .first()
+                    .description,
+                }
+                if address.adminUnitLevel2 is not None
+                else None,
+            }
+            for address in addresses
+        ]
+
+    def to_json(self):
+        data = self.to_mongo().to_dict()
+        data.pop("_id")
+        data = {k: v for k, v in data.items() if v}
+        return json.dumps(data, cls=JSONEncoder)
+
+    def to_json_enchanced(self):
+        data = self.to_mongo().to_dict()
+        data.pop("_id")
+        data["purpose"] = self.purposeDetails
+        data["organizationType"] = self.organizationTypeDetails
+        data["spatial"] = self.spatialDetails
+        data["subOrganizationOf"] = self.subOrganizationOfDetails
+        data["mainAddress"] = self.mainAddressDetails
+        data["secondaryAddresses"] = self.secondaryAddressesDetails
+        data = {k: v for k, v in data.items() if v}
+        return json.dumps(data, cls=JSONEncoder)
+
     def clean(self):
         print(f"Checking organization {self.code} {self.preferredLabel}")
+
         if self.purpose:
             print("Checking purpose")
             for id in self.purpose:
                 if not r.sismember("Functions", id):
                     raise me.ValidationError(f"Λάθος τιμή στο πεδίο purpose: {id}")
+
         if self.spatial:
             print("Checking spatial")
             for spatial in self.spatial:
@@ -123,13 +285,16 @@ class Organization(me.Document):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο spatial.cityId: {spatial.cityId}"
                     )
+
         if not r.sismember("OrganizationTypes", self.organizationType):
             print("Checking organizationType")
             raise me.ValidationError(
                 f"Λάθος τιμή στο πεδίο organizationType: {self.organizationType}"
             )
+
         if self.mainAddress:
             print("Checking mainAddress")
+
             if self.mainAddress.adminUnitLevel1:
                 if not r.sismember(
                     "Countries",
@@ -138,6 +303,7 @@ class Organization(me.Document):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο address.adminUnitLevel1: {self.mainAddress.adminUnitLevel1}"
                     )
+
             if self.mainAddress.adminUnitLevel2:
                 if not r.sismember(
                     "Cities",
@@ -146,8 +312,10 @@ class Organization(me.Document):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο address.adminUnitLevel2: {self.mainAddress.adminUnitLevel2}"
                     )
+
         if self.secondaryAddresses:
             print("Checking secondaryAddresses")
+
             for address in self.secondaryAddresses:
                 if address.adminUnitLevel1 and not r.sismember(
                     "Countries", str(address.adminUnitLevel1).encode("utf-8")
@@ -155,6 +323,7 @@ class Organization(me.Document):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο address.adminUnitLevel1: {address.adminUnitLevel1}"
                     )
+
                 if address.adminUnitLevel2 and not r.sismember(
                     "Cities", str(address.adminUnitLevel2).encode("utf-8")
                 ):
@@ -200,6 +369,7 @@ class OrganizationalUnit(me.Document):
                     )
                     self.purpose.remove(id)
                     print(self.purpose)
+
         if self.spatial:
             print("Checking spatial")
 
@@ -212,6 +382,7 @@ class OrganizationalUnit(me.Document):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο spatial.countryId: {spatial.countryId}"
                     )
+
                 if (
                     hasattr(spatial, "cityId")
                     and spatial.cityId is not None
@@ -220,9 +391,11 @@ class OrganizationalUnit(me.Document):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο spatial.cityId: {spatial.cityId}"
                     )
+
         if not r.sismember("UnitTypes", self.unitType):
             print("Checking unitType")
             raise me.ValidationError(f"Λάθος τιμή στο πεδίο unitType: {self.unitType}")
+
         if self.mainAddress:
             print("Checking mainAddress")
             if self.mainAddress.adminUnitLevel1:
@@ -241,6 +414,7 @@ class OrganizationalUnit(me.Document):
                     raise me.ValidationError(
                         f"Λάθος τιμή στο πεδίο address.adminUnitLevel2: {self.mainAddress.adminUnitLevel2}"
                     )
+
         if self.secondaryAddresses:
             print("Checking secondaryAddresses")
             for address in self.secondaryAddresses:

@@ -99,9 +99,7 @@ def get_organization_general_directorates(code: str):
         return Response(json.dumps(error), mimetype="application/json", status=404)
 
 
-@apografi.route(
-    "/organization/<string:code>/<string:gen_dir_code>/directorates", methods=["GET"]
-)
+@apografi.route( "/organization/<string:code>/<string:gen_dir_code>/directorates", methods=["GET"] )  # fmt: skip
 def get_organization_directorates(code: str, gen_dir_code: str):
     try:
         docs = OrganizationalUnit.objects(
@@ -113,10 +111,7 @@ def get_organization_directorates(code: str, gen_dir_code: str):
         return Response(json.dumps(error), mimetype="application/json", status=404)
 
 
-@apografi.route(
-    "/organization/<string:code>/<string:dir_code>/departments",
-    methods=["GET"],
-)
+@apografi.route( "/organization/<string:code>/<string:dir_code>/departments", methods=["GET"], )  # fmt: skip
 def get_organization_departments(code: str, dir_code: str):
     try:
         docs = OrganizationalUnit.objects(
