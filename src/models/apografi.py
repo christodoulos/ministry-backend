@@ -2,7 +2,7 @@ import json
 import mongoengine as me
 from datetime import datetime
 import redis
-from .utils import JSONEncoder
+from src.models.utils import JSONEncoder
 
 r = redis.Redis()
 
@@ -17,6 +17,17 @@ class Log(me.Document):
         required=True, choices=["dictionary", "organization", "organizational-unit"]
     )
     action = me.StringField(required=True, choices=["insert", "update"])
+    doc_id = me.StringField(required=True)
+    value = me.DictField(required=True)
+
+
+class Error(me.Document):
+    meta = {"collection": "errors", "db_alias": "apografi"}
+
+    date = me.DateTimeField(default=datetime.now())
+    entity = me.StringField(
+        required=True, choices=["dictionary", "organization", "organizational-unit"]
+    )
     doc_id = me.StringField(required=True)
     value = me.DictField(required=True)
 
@@ -258,78 +269,107 @@ class Organization(me.Document):
         return json.dumps(data, cls=JSONEncoder)
 
     def clean(self):
-        print(f"Checking organization {self.code} {self.preferredLabel}")
-
         if self.purpose:
-            print("Checking purpose")
+            not_in_dict = []
+
             for id in self.purpose:
                 if not r.sismember("Functions", id):
-                    raise me.ValidationError(f"Λάθος τιμή στο πεδίο purpose: {id}")
+                    not_in_dict.append(id)
+
+            if len(not_in_dict):
+                Error(
+                    entity="organization",
+                    doc_id=self.code,
+                    value={"Unknown purposes": not_in_dict},
+                ).save()
 
         if self.spatial:
-            print("Checking spatial")
+            city_not_in_dict = []
+            country_not_in_dict = []
+
             for spatial in self.spatial:
                 if (
                     hasattr(spatial, "countryId")
                     and spatial.cityId is not None
                     and not r.sismember("Countries", spatial.countryId)
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο spatial.countryId: {spatial.countryId}"
-                    )
+                    country_not_in_dict.append(spatial.countryId)
                 if (
                     hasattr(spatial, "cityId")
                     and spatial.cityId is not None
                     and not r.sismember("Cities", spatial.cityId)
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο spatial.cityId: {spatial.cityId}"
-                    )
+                    city_not_in_dict.append(spatial.cityId)
+
+            if len(country_not_in_dict) or len(city_not_in_dict):
+                Error(
+                    entity="organization",
+                    doc_id=self.code,
+                    value={
+                        "Unknown countries": country_not_in_dict,
+                        "Unknown cities": city_not_in_dict,
+                    },
+                ).save()
 
         if not r.sismember("OrganizationTypes", self.organizationType):
-            print("Checking organizationType")
-            raise me.ValidationError(
-                f"Λάθος τιμή στο πεδίο organizationType: {self.organizationType}"
-            )
+            Error(
+                entity="organization",
+                doc_id=self.code,
+                value={"Unknown organizationType": self.organizationType},
+            ).save()
 
         if self.mainAddress:
-            print("Checking mainAddress")
+            adminUnitLevel1_not_in_dict = ""
+            adminUnitLevel2_not_in_dict = ""
 
             if self.mainAddress.adminUnitLevel1:
                 if not r.sismember(
                     "Countries",
                     str(self.mainAddress.adminUnitLevel1).encode("utf-8"),
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο address.adminUnitLevel1: {self.mainAddress.adminUnitLevel1}"
-                    )
+                    adminUnitLevel1_not_in_dict = self.mainAddress.adminUnitLevel
 
             if self.mainAddress.adminUnitLevel2:
                 if not r.sismember(
                     "Cities",
                     str(self.mainAddress.adminUnitLevel2).encode("utf-8"),
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο address.adminUnitLevel2: {self.mainAddress.adminUnitLevel2}"
-                    )
+                    adminUnitLevel2_not_in_dict = self.mainAddress.adminUnitLevel2
+
+            if adminUnitLevel1_not_in_dict or adminUnitLevel2_not_in_dict:
+                Error(
+                    entity="organization",
+                    doc_id=self.code,
+                    value={
+                        "Unknown mainAddress adminUnitLevel1": adminUnitLevel1_not_in_dict,
+                        "Unknown mainAddress adminUnitLevel2": adminUnitLevel2_not_in_dict,
+                    },
+                ).save()
 
         if self.secondaryAddresses:
-            print("Checking secondaryAddresses")
+            adminUnitLevel1_not_in_dict = []
+            adminUnitLevel2_not_in_dict = []
 
             for address in self.secondaryAddresses:
                 if address.adminUnitLevel1 and not r.sismember(
                     "Countries", str(address.adminUnitLevel1).encode("utf-8")
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο address.adminUnitLevel1: {address.adminUnitLevel1}"
-                    )
+                    adminUnitLevel1_not_in_dict.append(address.adminUnitLevel1)
 
                 if address.adminUnitLevel2 and not r.sismember(
                     "Cities", str(address.adminUnitLevel2).encode("utf-8")
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο address.adminUnitLevel2: {address.adminUnitLevel2}"
-                    )
+                    adminUnitLevel2_not_in_dict.append(address.adminUnitLevel2)
+
+            if len(adminUnitLevel1_not_in_dict) or len(adminUnitLevel2_not_in_dict):
+                Error(
+                    entity="organization",
+                    doc_id=self.code,
+                    value={
+                        "Unknown secondaryAddresses adminUnitLevel1": adminUnitLevel1_not_in_dict,
+                        "Unknown secondaryAddresses adminUnitLevel2": adminUnitLevel2_not_in_dict,
+                    },
+                ).save()
 
 
 # A model for every organizational unit from https://hr.apografi.gov.gr/api.html#genikes-plhrofories-monades
@@ -360,18 +400,22 @@ class OrganizationalUnit(me.Document):
 
     def clean(self):
         if self.purpose:
-            print("Checking purpose")
-            print(self.purpose)
+            not_in_dict = []
+
             for id in self.purpose:
                 if not r.sismember("Functions", id):
-                    print(
-                        f"Λάθος τιμή στο πεδίο purpose: {id} στη μονάδα {self.code} {self.preferredLabel}"
-                    )
-                    self.purpose.remove(id)
-                    print(self.purpose)
+                    not_in_dict.append(id)
+
+            if len(not_in_dict):
+                Error(
+                    entity="organizational-unit",
+                    doc_id=self.code,
+                    value={"Unknown purposes": not_in_dict},
+                ).save()
 
         if self.spatial:
-            print("Checking spatial")
+            city_not_in_dict = []
+            country_not_in_dict = []
 
             for spatial in self.spatial:
                 if (
@@ -379,54 +423,78 @@ class OrganizationalUnit(me.Document):
                     and spatial.cityId is not None
                     and not r.sismember("Countries", spatial.countryId)
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο spatial.countryId: {spatial.countryId}"
-                    )
+                    country_not_in_dict.append(spatial.countryId)
 
                 if (
                     hasattr(spatial, "cityId")
                     and spatial.cityId is not None
                     and not r.sismember("Cities", spatial.cityId)
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο spatial.cityId: {spatial.cityId}"
-                    )
+                    city_not_in_dict.append(spatial.cityId)
+            if len(country_not_in_dict) or len(city_not_in_dict):
+                Error(
+                    entity="organizational-unit",
+                    doc_id=self.code,
+                    value={
+                        "Unknown countries": country_not_in_dict,
+                        "Unknown cities": city_not_in_dict,
+                    },
+                ).save()
 
         if not r.sismember("UnitTypes", self.unitType):
-            print("Checking unitType")
-            raise me.ValidationError(f"Λάθος τιμή στο πεδίο unitType: {self.unitType}")
+            Error(
+                entity="organizational-unit",
+                doc_id=self.code,
+                value={"Unknown unitType": self.unitType},
+            ).save()
 
         if self.mainAddress:
-            print("Checking mainAddress")
+            adminUnitLevel1_not_in_dict = ""
+            adminUnitLevel2_not_in_dict = ""
+
             if self.mainAddress.adminUnitLevel1:
                 if not r.sismember(
                     "Countries",
                     str(self.mainAddress.adminUnitLevel1).encode("utf-8"),
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο address.adminUnitLevel1: {self.mainAddress.adminUnitLevel1}"
-                    )
+                    adminUnitLevel1_not_in_dict = self.mainAddress.adminUnitLevel1
             if self.mainAddress.adminUnitLevel2:
                 if not r.sismember(
                     "Cities",
                     str(self.mainAddress.adminUnitLevel2).encode("utf-8"),
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο address.adminUnitLevel2: {self.mainAddress.adminUnitLevel2}"
-                    )
+                    adminUnitLevel2_not_in_dict = self.mainAddress.adminUnitLevel2
+
+            if adminUnitLevel1_not_in_dict or adminUnitLevel2_not_in_dict:
+                Error(
+                    entity="organizational-unit",
+                    doc_id=self.code,
+                    value={
+                        "Unknown mainAddress adminUnitLevel1": adminUnitLevel1_not_in_dict,
+                        "Unknown mainAddress adminUnitLevel2": adminUnitLevel2_not_in_dict,
+                    },
+                ).save()
 
         if self.secondaryAddresses:
-            print("Checking secondaryAddresses")
+            adminUnitLevel1_not_in_dict = []
+            adminUnitLevel2_not_in_dict = []
+
             for address in self.secondaryAddresses:
                 if address.adminUnitLevel1 and not r.sismember(
                     "Countries", str(address.adminUnitLevel1).encode("utf-8")
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο address.adminUnitLevel1: {address.adminUnitLevel1}"
-                    )
+                    adminUnitLevel1_not_in_dict.append(address.adminUnitLevel1)
                 if address.adminUnitLevel2 and not r.sismember(
                     "Cities", str(address.adminUnitLevel2).encode("utf-8")
                 ):
-                    raise me.ValidationError(
-                        f"Λάθος τιμή στο πεδίο address.adminUnitLevel2: {address.adminUnitLevel2}"
-                    )
+                    adminUnitLevel2_not_in_dict.append(address.adminUnitLevel2)
+
+            if len(adminUnitLevel1_not_in_dict) or len(adminUnitLevel2_not_in_dict):
+                Error(
+                    entity="organizational-unit",
+                    doc_id=self.code,
+                    value={
+                        "Unknown secondaryAddresses adminUnitLevel1": adminUnitLevel1_not_in_dict,
+                        "Unknown secondaryAddresses adminUnitLevel2": adminUnitLevel2_not_in_dict,
+                    },
+                ).save()
