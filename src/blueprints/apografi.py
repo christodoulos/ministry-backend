@@ -1,6 +1,7 @@
 from flask import Blueprint, Response
 import json
 
+from src.blueprints.utils import convert_greek_accented_chars
 from src.models.apografi import Dictionary, Organization, OrganizationalUnit
 
 
@@ -69,7 +70,9 @@ def get_organization_id(code: str):
 @apografi.route("/organization/<string:label>/label", methods=["GET"])
 def get_organization_label(label: str):
     try:
-        doc = Organization.objects(preferredLabel__icontains=label)
+        doc = Organization.objects(
+            preferredLabel__icontains=convert_greek_accented_chars(label)
+        )
         return Response(doc.to_json(), mimetype="application/json", status=200)
     except Exception as e:
         error = {"error": str(e)}

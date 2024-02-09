@@ -17,7 +17,7 @@ def get_foreas(code: str):
         )
     except Organization.DoesNotExist:
         return Response(
-            json.dumps({"message": f"Δεν βρέθηκε φορέας με κωδικό {code}"}),
+            json.dumps({"error": f"Δεν βρέθηκε φορέας με κωδικό {code}"}),
             mimetype="application/json",
             status=404,
         )

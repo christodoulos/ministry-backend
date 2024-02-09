@@ -263,7 +263,7 @@ class Organization(me.Document):
         data["organizationType"] = self.organizationTypeDetails
         data["spatial"] = self.spatialDetails
         data["subOrganizationOf"] = self.subOrganizationOfDetails
-        data["mainAddress"] = self.mainAddressDetails
+        data["mainAddress"] = {k: v for k, v in self.mainAddressDetails.items() if v}
         data["secondaryAddresses"] = self.secondaryAddressesDetails
         data = {k: v for k, v in data.items() if v}
         return json.dumps(data, cls=JSONEncoder)
