@@ -16,9 +16,39 @@
     }
   },
 
-  "tags": {
-    "$ref": "./tags.json"
-  },
+  "tags": [
+    {
+      "name": "ΠΣΠΕΔ - Φορείς",
+      "description": "Δεδομένα Φορέων, όπως εμπλουτίζονται στο ΠΣΠΕΔ"
+    },
+
+    {
+      "name": "Δεδομένα Απογραφής - Λεξικά",
+      "description": "Λεξικά που συγχρονίζονται ημερήσια από το API της Απογραφής",
+      "externalDocs": {
+        "description": "Λεξικά Απογραφής",
+        "url": "https://t.ly/-WBAk"
+      }
+    },
+
+    {
+      "name": "Δεδομένα Απογραφής - Φορείς",
+      "description": "Φορείς που συγχρονίζονται ημερήσια από το API της Απογραφής",
+      "externalDocs": {
+        "description": "Φορείς Απογραφής",
+        "url": "https://t.ly/gIFkc"
+      }
+    },
+
+    {
+      "name": "Δεδομένα Απογραφής - Μονάδες",
+      "description": "Μονάδες που συγχρονίζονται ημερήσια από το API της Απογραφής",
+      "externalDocs": {
+        "description": "Μονάδες Απογραφής",
+        "url": "https://t.ly/wX3Dc"
+      }
+    }
+  ],
 
   "paths": {
     "/apografi/dictionary/{dictionary}/{id}/description": {
