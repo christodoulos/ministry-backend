@@ -1,9 +1,13 @@
-from src.apografi.lib import (
-    sync_organizations,
-    sync_organizational_units,
-    sync_organization_units,
+from src.apografi.sync_dictionaries import (
+    sync_apografi_dictionaries,
+    cache_dictionaries,
 )
+from src.apografi.sync_organizations import sync_organizations
+from src.apografi.sync_organizational_units import sync_organizational_units
 
-# sync_organizations()
-# sync_organizational_units()
-# sync_organization_units("19408")
+sync_apografi_dictionaries()
+cache_dictionaries()
+
+sync_organizations()
+
+sync_organizational_units()

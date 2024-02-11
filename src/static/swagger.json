@@ -516,6 +516,49 @@
           }
         }
       }
+    },
+
+    "/psped/foreas/{code}/enchanched": {
+      "get": {
+        "summary": "Επιστρέφει από το ΠΣΠΕΔ το φορέα με κωδικό {code}",
+        "tags": ["ΠΣΠΕΔ - Φορείς"],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "description": "Ο κωδικός του φορέα",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ο Φορέας βρέθηκε",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ο Φορέας δεν βρέθηκε",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
 
