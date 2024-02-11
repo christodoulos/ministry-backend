@@ -6,8 +6,6 @@ from deepdiff import DeepDiff
 from alive_progress import alive_bar
 import redis
 
-r = redis.Redis()
-
 
 def sync_apografi_dictionaries():
     print("Συγχρονισμός λεξικών από την Απογραφή...")
@@ -60,11 +58,26 @@ def sync_apografi_dictionaries():
 
 
 def cache_dictionaries():
-    r = redis.Redis()
-    print("Καταχώρηση λεξικών στην cache...")
+    r = redis.Redis(db=0)
+    r.flushdb()
+    print("Καταχώρηση συνόλων στην cache...")
     for dictionary in APOGRAFI_DICTIONARIES.keys():
-        r.delete(dictionary)
+        # r.delete(dictionary)
         docs = Dictionary.objects(code=dictionary)
         ids = set([doc["apografi_id"] for doc in docs])
         r.sadd(dictionary, *ids)
+    print("Τέλος καταχώρησης συνόλων στην cache.")
+
+    r = redis.Redis(db=1)
+    r.flushdb()
+    print("Καταχώρηση λεξικών στην cache...")
+    for entry in Dictionary.objects():
+        if entry["code"] in [
+            "Functions",
+            "Cities",
+            "Countries",
+            "OrganizationTypes",
+            "UnitTypes",
+        ]:
+            r.set(f"{entry['code']}:{entry['apografi_id']}", entry["description"])
     print("Τέλος καταχώρησης λεξικών στην cache.")

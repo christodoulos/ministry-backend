@@ -33,6 +33,8 @@ class OrganizationalUnit(me.Document):
     mainAddress = me.EmbeddedDocumentField(Address)
     secondaryAddresses = me.ListField(me.EmbeddedDocumentField(Address))
 
+    dict_cache = redis.Redis(db=1)
+
     @property
     def supervisorUnitCodeDetails(self):
         code = self.supervisorUnitCode
@@ -48,19 +50,25 @@ class OrganizationalUnit(me.Document):
                 key: value
                 for key, value in {
                     "countryId": spatial.countryId,
-                    "countryDescription": Dictionary.objects(
-                        code="Countries", apografi_id=spatial.countryId
-                    )
-                    .first()
-                    .description
+                    # "countryDescription": Dictionary.objects(
+                    #     code="Countries", apografi_id=spatial.countryId
+                    # )
+                    # .first()
+                    # .description
+                    "countryDescription": self.dict_cache.get(
+                        f"Countries:{spatial.countryId}"
+                    ).decode("utf-8")
                     if spatial.countryId is not None
                     else None,
                     "cityId": spatial.cityId,
-                    "cityDescription": Dictionary.objects(
-                        code="Cities", apografi_id=spatial.cityId
-                    )
-                    .first()
-                    .description
+                    # "cityDescription": Dictionary.objects(
+                    #     code="Cities", apografi_id=spatial.cityId
+                    # )
+                    # .first()
+                    # .description
+                    "cityDescription": self.dict_cache.get(
+                        f"Cities:{spatial.cityId}"
+                    ).decode("utf-8")
                     if spatial.cityId is not None
                     else None,
                 }.items()
@@ -74,9 +82,10 @@ class OrganizationalUnit(me.Document):
         id = self.unitType
         return {
             "id": id,
-            "description": Dictionary.objects(code="UnitTypes", apografi_id=id)
-            .first()
-            .description,
+            # "description": Dictionary.objects(code="UnitTypes", apografi_id=id)
+            # .first()
+            # .description,
+            "description": self.dict_cache.get(f"UnitTypes:{id}").decode("utf-8"),
         }
 
     @property
@@ -85,9 +94,10 @@ class OrganizationalUnit(me.Document):
         return [
             {
                 "id": id,
-                "description": Dictionary.objects(code="Functions", apografi_id=id)
-                .first()
-                .description,
+                # "description": Dictionary.objects(code="Functions", apografi_id=id)
+                # .first()
+                # .description,
+                "description": self.dict_cache.get(f"Functions:{id}").decode("utf-8"),
             }
             for id in ids
             if Dictionary.objects(code="Functions", apografi_id=id).first()
@@ -113,9 +123,12 @@ class OrganizationalUnit(me.Document):
             adminUnitLevel1 = (
                 {
                     "id": id1,
-                    "description": Dictionary.objects(code="Countries", apografi_id=id1)
-                    .first()
-                    .description,
+                    # "description": Dictionary.objects(code="Countries", apografi_id=id1)
+                    # .first()
+                    # .description,
+                    "description": self.dict_cache.get(f"Countries:{id1}").decode(
+                        "utf-8"
+                    ),
                 }
                 if id1 is not None
                 else None
@@ -124,9 +137,10 @@ class OrganizationalUnit(me.Document):
             adminUnitLevel2 = (
                 {
                     "id": id2,
-                    "description": Dictionary.objects(code="Cities", apografi_id=id2)
-                    .first()
-                    .description,
+                    # "description": Dictionary.objects(code="Cities", apografi_id=id2)
+                    # .first()
+                    # .description,
+                    "description": self.dict_cache.get(f"Cities:{id2}").decode("utf-8"),
                 }
                 if id2 is not None
                 else None
@@ -148,21 +162,27 @@ class OrganizationalUnit(me.Document):
                 "postCode": address.postCode,
                 "adminUnitLevel1": {
                     "id": address.adminUnitLevel1,
-                    "description": Dictionary.objects(
-                        code="Countries", apografi_id=address.adminUnitLevel1
-                    )
-                    .first()
-                    .description,
+                    # "description": Dictionary.objects(
+                    #     code="Countries", apografi_id=address.adminUnitLevel1
+                    # )
+                    # .first()
+                    # .description,
+                    "description": self.dict_cache.get(
+                        f"Countries:{address.adminUnitLevel1}"
+                    ).decode("utf-8"),
                 }
                 if address.adminUnitLevel1 is not None
                 else None,
                 "adminUnitLevel2": {
                     "id": address.adminUnitLevel2,
-                    "description": Dictionary.objects(
-                        code="Cities", apografi_id=address.adminUnitLevel2
-                    )
-                    .first()
-                    .description,
+                    # "description": Dictionary.objects(
+                    #     code="Cities", apografi_id=address.adminUnitLevel2
+                    # )
+                    # .first()
+                    # .description,
+                    "description": self.dict_cache.get(
+                        f"Cities:{address.adminUnitLevel2}"
+                    ).decode("utf-8"),
                 }
                 if address.adminUnitLevel2 is not None
                 else None,
