@@ -1,0 +1,29 @@
+{
+  "get": {
+    "summary": "Επιστρέφει τους φορείς που η επίσημη ονομασία τους περιέχει το label",
+    "tags": ["Δεδομένα Απογραφής - Φορείς"],
+
+    "parameters": [
+      {
+        "name": "label",
+        "in": "path",
+        "required": true,
+        "description": "Μέρος της επίσημης ονομασίας του φορέα",
+        "schema": { "type": "string" }
+      }
+    ],
+
+    "responses": {
+      "200": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/apografi.json#Organization"
+            }
+          }
+        }
+      }
+    }
+  }
+}

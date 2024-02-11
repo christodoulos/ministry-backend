@@ -1,0 +1,61 @@
+{
+  "get": {
+    "summary": "Επιστρέφει τα τμήματα του φορέα με τον κωδικό code που υπάγονται στη Διεύθυνση με τον κωδικό dir_code",
+    "tags": ["Δεδομένα Απογραφής - Μονάδες"],
+    "parameters": [
+      {
+        "name": "code",
+        "in": "path",
+        "required": true,
+        "description": "Ο κωδικός του φορέα",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "dir_code",
+        "in": "path",
+        "required": true,
+        "description": "Ο κωδικός της Διεύθυνσης",
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Τα τμήματα της Διευθύνσης του φορέα βρέθηκαν",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "units": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Δεν υπάρχουν αποτελέσματα ή ο κωδικός του φορέα ή της Διεύθυνσης δεν υπάρχει",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "get": {
+    "summary": "Επιστρέφει τις μονάδες του φορέα με τον κωδικό code",
+    "tags": ["Δεδομένα Απογραφής - Μονάδες"],
+
+    "parameters": [
+      {
+        "name": "code",
+        "in": "path",
+        "required": true,
+        "description": "Ο κωδικός του φορέα",
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+
+    "responses": {
+      "200": {
+        "description": "Οι μονάδες του φορέα βρέθηκαν",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "units": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+
+      "404": {
+        "description": "Δεν βρέθηκαν μονάδες ή ο κωδικός του φορέα δεν υπάρχει",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

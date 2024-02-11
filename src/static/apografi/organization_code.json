@@ -1,0 +1,29 @@
+{
+  "get": {
+    "summary": "Επιστρέφει το φορέα με τον κωδικό code",
+    "tags": ["Δεδομένα Απογραφής - Φορείς"],
+
+    "parameters": [
+      {
+        "name": "code",
+        "in": "path",
+        "required": true,
+        "description": "Ο κωδικός του φορέα",
+        "schema": { "type": "string" }
+      }
+    ],
+
+    "responses": {
+      "200": {
+        "description": "Ο Φορέας βρέθηκε",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/apografi.json#Organization"
+            }
+          }
+        }
+      }
+    }
+  }
+}

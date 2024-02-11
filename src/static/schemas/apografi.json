@@ -1,0 +1,84 @@
+{
+  "Organization": {
+    "type": "object",
+    "properties": {
+      "code": { "type": "string" },
+      "preferredLabel": { "type": "string" },
+      "alternativeLabels": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "purpose": {
+        "type": "array",
+        "items": { "type": "integer" }
+      },
+      "spatial": {
+        "type": "array",
+        "items": { "$ref": "#Spatial" }
+      },
+      "identifier": { "type": "string" },
+      "subOrganizationOf": { "type": "string" },
+      "organizationType": { "type": "integer" },
+      "description": { "type": "string" },
+      "url": { "type": "string", "format": "uri" },
+      "contactPoint": {
+        "$ref": "#ContactPoint"
+      },
+      "vatId": { "type": "string" },
+      "status": { "type": "string" },
+      "foundationDate": { "type": "string", "format": "date-time" },
+      "terminationDate": { "type": "string", "format": "date-time" },
+      "mainDataUpdateDate": { "type": "string", "format": "date-time" },
+      "organizationStructureUpdateDate": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "foundationFek": {
+        "$ref": "#FoundationFek"
+      },
+      "mainAddress": {
+        "$ref": "#Address"
+      },
+      "secondaryAddresses": {
+        "type": "array",
+        "items": { "$ref": "#Address" }
+      }
+    },
+    "required": ["code"]
+  },
+
+  "Spatial": {
+    "type": "object",
+    "properties": {
+      "countryId": { "type": "integer" },
+      "cityId": { "type": "integer" }
+    }
+  },
+
+  "ContactPoint": {
+    "type": "object",
+    "properties": {
+      "email": { "type": "string", "format": "email" },
+      "telephone": { "type": "string" }
+    }
+  },
+
+  "FoundationFek": {
+    "type": "object",
+    "properties": {
+      "year": { "type": "integer" },
+      "number": { "type": "string" },
+      "issue": { "type": "string" }
+    }
+  },
+
+  "Address": {
+    "type": "object",
+    "properties": {
+      "fullAddress": { "type": "string" },
+      "postCode": { "type": "string" },
+      "adminUnitLevel1": { "type": "integer" },
+      "adminUnitLevel2": { "type": "integer" }
+    }
+  }
+}

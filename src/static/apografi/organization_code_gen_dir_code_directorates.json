@@ -1,0 +1,65 @@
+{
+  "get": {
+    "summary": "Επιστρέφει τις Διευθύνσεις του φορέα με τον κωδικό code που υπάγονται στη Γενική Διεύθυνση με τον κωδικό gen_dir_code",
+    "tags": ["Δεδομένα Απογραφής - Μονάδες"],
+
+    "parameters": [
+      {
+        "name": "code",
+        "in": "path",
+        "required": true,
+        "description": "Ο κωδικός του φορέα",
+        "schema": {
+          "type": "string"
+        }
+      },
+
+      {
+        "name": "gen_dir_code",
+        "in": "path",
+        "required": true,
+        "description": "Ο κωδικός της Γενικής Διεύθυνσης",
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+
+    "responses": {
+      "200": {
+        "description": "Οι Διευθύνσεις της Γενικής Διευθύνσης του φορέα βρέθηκαν",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "units": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+
+      "404": {
+        "description": "Δεν υπάρχουν αποτελέσματα ή ο κωδικός του φορέα ή της Γενικής Διεύθυνσης δεν υπάρχει",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

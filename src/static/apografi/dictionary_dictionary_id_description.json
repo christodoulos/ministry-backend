@@ -1,0 +1,38 @@
+{
+  "get": {
+    "summary": "Επιστρέφει την περιγραφή του λεξικού από το id",
+    "tags": ["Δεδομένα Απογραφής - Λεξικά"],
+
+    "parameters": [
+      {
+        "name": "dictionary",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        }
+      }
+    ],
+
+    "responses": {
+      "200": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  }
+}

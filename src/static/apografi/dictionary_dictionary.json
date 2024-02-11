@@ -1,0 +1,39 @@
+{
+  "get": {
+    "summary": "Επιστρέφει τη συνολική καταχώρηση του λεξικού",
+    "tags": ["Δεδομένα Απογραφής - Λεξικά"],
+
+    "parameters": [
+      {
+        "name": "dictionary",
+        "in": "path",
+        "required": true,
+        "description": "Το όνομα του λεξικού από την απογραφή (https://t.ly/dWBz1)",
+        "schema": { "type": "string" }
+      }
+    ],
+
+    "responses": {
+      "200": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "apografi_id": { "type": "integer" },
+                  "parentId": { "type": "integer" },
+                  "code": { "type": "string" },
+                  "code_el": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
