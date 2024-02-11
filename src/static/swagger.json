@@ -47,10 +47,19 @@
         "description": "Μονάδες Απογραφής",
         "url": "https://t.ly/wX3Dc"
       }
+    },
+
+    {
+      "name": "Δεδομένα Απογραφής - Στατιστικά",
+      "description": "Στατιστικά των δεδομένων που συγχρονίζονται ημερήσια από το API της Απογραφής"
     }
   ],
 
   "paths": {
+    "/apografi/stats/count": {
+      "$ref": "./apografi/stats_count.json"
+    },
+
     "/apografi/dictionary/{dictionary}/{id}/description": {
       "$ref": "./apografi/dictionary_dictionary_id_description.json"
     },

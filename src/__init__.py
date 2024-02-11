@@ -6,6 +6,7 @@ from mongoengine import connect
 
 from src.blueprints.apografi import apografi
 from src.blueprints.psped import psped
+from src.blueprints.stats import stats
 
 app = Flask(__name__)
 
@@ -21,6 +22,7 @@ cors = CORS(
 
 # Register blueprints
 app.register_blueprint(apografi, url_prefix="/apografi")
+app.register_blueprint(stats, url_prefix="/apografi/stats")
 app.register_blueprint(psped, url_prefix="/psped")
 
 

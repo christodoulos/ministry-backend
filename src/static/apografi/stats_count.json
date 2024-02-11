@@ -1,0 +1,19 @@
+{
+  "get": {
+    "summary": "Στατιστικά στοιχεία απογραφής",
+    "tags": ["Δεδομένα Απογραφής - Στατιστικά"],
+    "parameters": [],
+    "responses": {
+      "200": {
+        "description": "Στατιστικα στοιχεία απογραφής",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  }
+}
