@@ -30,18 +30,12 @@ class Foreas(me.Document):
         organization_id = self.apografi.foreas.id
         organizational_units_ids = [monada.id for monada in self.apografi.monades]
         organization = Organization.objects.with_id(organization_id).to_json_enchanced()
-        organizational_units = [
-            OrganizationalUnit.objects.with_id(ou_id)
-            for ou_id in organizational_units_ids
-        ]
+        organizational_units = [OrganizationalUnit.objects.with_id(ou_id) for ou_id in organizational_units_ids]
 
         data = {
             **json.loads(organization),
             "level": self.level,
-            "monades": [
-                {**json.loads(unit.to_json_enchanced())}
-                for unit in organizational_units
-            ],
+            "monades": [{**json.loads(unit.to_json_enchanced())} for unit in organizational_units],
         }
 
         return json.dumps(data)

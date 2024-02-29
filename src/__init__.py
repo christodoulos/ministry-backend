@@ -8,10 +8,36 @@ from src.blueprints.apografi import apografi
 from src.blueprints.psped import psped
 from src.blueprints.stats import stats
 
+from src.config import (
+    MONGO_HOST,
+    MONGO_PORT,
+    MONGO_APOGRAFI_DB,
+    MONGO_PSPED_DB,
+    MONGO_USERNAME,
+    MONGO_PASSWORD,
+    MONGO_AUTHENTICATION_SOURCE,
+)
+
 app = Flask(__name__)
 
-connect(db="apografi", alias="apografi")
-connect(db="psped", alias="psped")
+connect(
+    host=MONGO_HOST,
+    port=MONGO_PORT,
+    username=MONGO_USERNAME,
+    password=MONGO_PASSWORD,
+    authentication_source=MONGO_AUTHENTICATION_SOURCE,
+    db=MONGO_APOGRAFI_DB,
+    alias=MONGO_APOGRAFI_DB,
+)
+connect(
+    host=MONGO_HOST,
+    port=MONGO_PORT,
+    username=MONGO_USERNAME,
+    password=MONGO_PASSWORD,
+    authentication_source=MONGO_AUTHENTICATION_SOURCE,
+    db=MONGO_PSPED_DB,
+    alias=MONGO_PSPED_DB,
+)
 
 
 # CORS configuration

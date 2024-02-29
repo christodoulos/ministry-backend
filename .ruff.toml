@@ -1,0 +1,17 @@
+# Exclude a variety of commonly ignored directories.
+exclude = [".git", ".venv", "dist", "node_modules"]
+
+# Set line length and indent width
+line-length = 120
+indent-width = 4
+
+[lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+
+[format]
+# Use double quotes for strings.
+quote-style = "double"
+# Indent with spaces, rather than tabs.
+indent-style = "space"
