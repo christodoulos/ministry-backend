@@ -4,6 +4,7 @@ from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 from mongoengine import connect
 
+from src.blueprints.auth import auth
 from src.blueprints.apografi import apografi
 from src.blueprints.psped import psped
 from src.blueprints.stats import stats
@@ -29,6 +30,7 @@ connect(
     db=MONGO_APOGRAFI_DB,
     alias=MONGO_APOGRAFI_DB,
 )
+
 connect(
     host=MONGO_HOST,
     port=MONGO_PORT,
@@ -47,6 +49,7 @@ cors = CORS(
 )
 
 # Register blueprints
+app.register_blueprint(auth, url_prefix="/auth")
 app.register_blueprint(apografi, url_prefix="/apografi")
 app.register_blueprint(stats, url_prefix="/apografi/stats")
 app.register_blueprint(psped, url_prefix="/psped")
