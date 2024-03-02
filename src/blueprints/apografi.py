@@ -17,9 +17,7 @@ def get_dictionary_id(dictionary: str, id: int):
     try:
         doc = Dictionary.objects().get(code=dictionary, apografi_id=id)
         description = {"description": doc["description"]}
-        return Response(
-            json.dumps(description), mimetype="application/json", status=200
-        )
+        return Response(json.dumps(description), mimetype="application/json", status=200)
     except Exception as e:
         error = {"error": str(e)}
         return Response(json.dumps(error), mimetype="application/json", status=404)
@@ -39,7 +37,7 @@ def get_dictionary_code(dictionary: str, description: str):
 
 @apografi.route("/dictionary/<string:dictionary>", methods=["GET"])
 def get_dictionary(dictionary: str):
-    dictionary = Dictionary.objects(code=dictionary)
+    dictionary = Dictionary.objects(code=dictionary).only("apografi_id", "description").exclude("id")
     return Response(dictionary.to_json(), mimetype="application/json", status=200)
 
 
@@ -55,7 +53,7 @@ def get_dictionary_ids(dictionary: str):
 
 @apografi.route("/organization", methods=["GET"])
 def get_organization():
-    organization = Organization.objects()
+    organization = Organization.objects().only("code", "preferredLabel").exclude("id")
     return Response(organization.to_json(), mimetype="application/json", status=200)
 
 
@@ -72,9 +70,7 @@ def get_organization_id(code: str):
 @apografi.route("/organization/<string:label>/label", methods=["GET"])
 def get_organization_label(label: str):
     try:
-        doc = Organization.objects(
-            preferredLabel__icontains=convert_greek_accented_chars(label)
-        )
+        doc = Organization.objects(preferredLabel__icontains=convert_greek_accented_chars(label))
         return Response(doc.to_json(), mimetype="application/json", status=200)
     except Exception as e:
         error = {"error": str(e)}
@@ -107,9 +103,7 @@ def get_organization_general_directorates(code: str):
 @apografi.route( "/organization/<string:code>/<string:gen_dir_code>/directorates", methods=["GET"] )  # fmt: skip
 def get_organization_directorates(code: str, gen_dir_code: str):
     try:
-        docs = OrganizationalUnit.objects(
-            organizationCode=code, supervisorUnitCode=gen_dir_code
-        )
+        docs = OrganizationalUnit.objects(organizationCode=code, supervisorUnitCode=gen_dir_code)
         return Response(docs.to_json(), mimetype="application/json", status=200)
     except Exception as e:
         error = {"error": str(e)}
@@ -119,9 +113,7 @@ def get_organization_directorates(code: str, gen_dir_code: str):
 @apografi.route( "/organization/<string:code>/<string:dir_code>/departments", methods=["GET"], )  # fmt: skip
 def get_organization_departments(code: str, dir_code: str):
     try:
-        docs = OrganizationalUnit.objects(
-            organizationCode=code, supervisorUnitCode=dir_code, unitType=2
-        )
+        docs = OrganizationalUnit.objects(organizationCode=code, supervisorUnitCode=dir_code, unitType=2)
         return Response(docs.to_json(), mimetype="application/json", status=200)
     except Exception as e:
         error = {"error": str(e)}

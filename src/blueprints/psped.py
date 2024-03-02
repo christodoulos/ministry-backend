@@ -39,3 +39,17 @@ def get_foreas_enchanced(code: str):
             mimetype="application/json",
             status=404,
         )
+
+
+@psped.route("/foreas/all", methods=["GET"])
+def get_all_foreas():
+    data = (
+        Organization.objects.only("code", "organizationType", "preferredLabel", "subOrganizationOf", "status")
+        .exclude("id")
+        .order_by("preferredLabel")
+    )
+    return Response(
+        data.to_json(),
+        mimetype="application/json",
+        status=200,
+    )

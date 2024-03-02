@@ -1,0 +1,44 @@
+{
+    "get": {
+      "summary": "Get all foreas",
+      "tags": ["ΠΣΠΕΔ - Φορείς"],
+      "responses": {
+        "200": {
+          "description": "Successful operation",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "The code of the organization"
+                    },
+                    "organizationType": {
+                      "type": "integer",
+                      "description": "The type of the organization"
+                    },
+                    "preferredLabel": {
+                      "type": "string",
+                      "description": "The preferred label of the organization"
+                    },
+                    "subOrganizationOf": {
+                      "type": "string",
+                      "description": "The parent organization of the organization"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "The status of the organization"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+

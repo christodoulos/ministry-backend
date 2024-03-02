@@ -100,6 +100,11 @@
       "$ref": "./apografi/organization_code_dir_code_departments.json"
     },
 
+
+    "/psped/foreas/all": {
+      "$ref": "./psped/foreas_all.json"
+    },
+
     "/psped/foreas/{code}": {
       "$ref": "./psped/foreas_code.json"
     },
