@@ -15,7 +15,8 @@ def google_auth():
     idToken = request.json["idToken"]
     try:
         id_info = id_token.verify_oauth2_token(idToken, requests.Request(), GOOGLE_AUDIENCE)
-    except ValueError:
+    except Exception as e:
+        print(e)
         return Response({"error": "Invalid user"}, status=401)
     user = User.objects(googleId=id_info["sub"])
 

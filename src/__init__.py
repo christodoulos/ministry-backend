@@ -1,5 +1,7 @@
 from flask import Flask
 
+from flask_jwt_extended import JWTManager
+
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 from mongoengine import connect
@@ -17,9 +19,14 @@ from src.config import (
     MONGO_USERNAME,
     MONGO_PASSWORD,
     MONGO_AUTHENTICATION_SOURCE,
+    JWT_SECRET_KEY,
 )
 
 app = Flask(__name__)
+
+jwt = JWTManager(app)
+app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
+
 
 connect(
     host=MONGO_HOST,
