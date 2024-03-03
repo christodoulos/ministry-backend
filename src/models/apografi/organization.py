@@ -53,9 +53,7 @@ class Organization(me.Document):
             # "description": Dictionary.objects(code="OrganizationTypes", apografi_id=id)
             # .first()
             # .description,
-            "description": self.dict_cache.get(f"OrganizationTypes:{id}").decode(
-                "utf-8"
-            ),
+            "description": self.dict_cache.get(f"OrganizationTypes:{id}").decode("utf-8"),
         }
 
     @property
@@ -84,9 +82,7 @@ class Organization(me.Document):
                     # )
                     # .first()
                     # .description
-                    "countryDescription": self.dict_cache.get(
-                        f"Countries:{spatial.countryId}"
-                    ).decode("utf-8")
+                    "countryDescription": self.dict_cache.get(f"Countries:{spatial.countryId}").decode("utf-8")
                     if spatial.countryId is not None
                     else None,
                     "cityId": spatial.cityId,
@@ -95,9 +91,7 @@ class Organization(me.Document):
                     # )
                     # .first()
                     # .description
-                    "cityDescription": self.dict_cache.get(
-                        f"Cities:{spatial.cityId}"
-                    ).decode("utf-8")
+                    "cityDescription": self.dict_cache.get(f"Cities:{spatial.cityId}").decode("utf-8")
                     if spatial.cityId is not None
                     else None,
                 }.items()
@@ -140,9 +134,7 @@ class Organization(me.Document):
                     # "description": Dictionary.objects(code="Countries", apografi_id=id1)
                     # .first()
                     # .description,
-                    "description": self.dict_cache.get(f"Countries:{id1}").decode(
-                        "utf-8"
-                    ),
+                    "description": self.dict_cache.get(f"Countries:{id1}").decode("utf-8"),
                 }
                 if id1 is not None
                 else None
@@ -181,9 +173,7 @@ class Organization(me.Document):
                     # )
                     # .first()
                     # .description,
-                    "description": self.dict_cache.get(
-                        f"Countries:{address.adminUnitLevel1}"
-                    ).decode("utf-8"),
+                    "description": self.dict_cache.get(f"Countries:{address.adminUnitLevel1}").decode("utf-8"),
                 }
                 if address.adminUnitLevel1 is not None
                 else None,
@@ -194,9 +184,7 @@ class Organization(me.Document):
                     # )
                     # .first()
                     # .description,
-                    "description": self.dict_cache.get(
-                        f"Cities:{address.adminUnitLevel2}"
-                    ).decode("utf-8"),
+                    "description": self.dict_cache.get(f"Cities:{address.adminUnitLevel2}").decode("utf-8"),
                 }
                 if address.adminUnitLevel2 is not None
                 else None,
@@ -217,7 +205,7 @@ class Organization(me.Document):
         data["organizationType"] = self.organizationTypeDetails
         data["spatial"] = self.spatialDetails
         data["subOrganizationOf"] = self.subOrganizationOfDetails
-        data["mainAddress"] = {k: v for k, v in self.mainAddressDetails.items() if v}
+        data["mainAddress"] = {k: v for k, v in self.mainAddressDetails.items() if v} if self.mainAddress else None
         data["secondaryAddresses"] = self.secondaryAddressesDetails
         data = {k: v for k, v in data.items() if v}
         return json.dumps(data, cls=JSONEncoder)
@@ -311,9 +299,7 @@ class Organization(me.Document):
                 ):
                     adminUnitLevel1_not_in_dict.append(address.adminUnitLevel1)
 
-                if address.adminUnitLevel2 and not r.sismember(
-                    "Cities", str(address.adminUnitLevel2).encode("utf-8")
-                ):
+                if address.adminUnitLevel2 and not r.sismember("Cities", str(address.adminUnitLevel2).encode("utf-8")):
                     adminUnitLevel2_not_in_dict.append(address.adminUnitLevel2)
 
             if len(adminUnitLevel1_not_in_dict) or len(adminUnitLevel2_not_in_dict):
