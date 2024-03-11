@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify, make_response
 
 from flask_jwt_extended import JWTManager
 
@@ -10,6 +10,7 @@ from src.blueprints.auth import auth
 from src.blueprints.apografi import apografi
 from src.blueprints.psped import psped
 from src.blueprints.stats import stats
+from src.blueprints.upload import upload
 
 from src.config import (
     MONGO_HOST,
@@ -26,6 +27,14 @@ app = Flask(__name__)
 
 jwt = JWTManager(app)
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
+
+app.config["UPLOAD_FOLDER"] = "/tmp"
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
+
+
+@app.errorhandler(413)
+def too_large(e):
+    return make_response(jsonify(message="File is too large"), 413)
 
 
 connect(
@@ -60,6 +69,7 @@ app.register_blueprint(auth, url_prefix="/auth")
 app.register_blueprint(apografi, url_prefix="/apografi")
 app.register_blueprint(stats, url_prefix="/apografi/stats")
 app.register_blueprint(psped, url_prefix="/psped")
+app.register_blueprint(upload, url_prefix="/upload")
 
 
 # Swagger configuration
