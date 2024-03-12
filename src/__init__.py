@@ -21,6 +21,8 @@ from src.config import (
     MONGO_PASSWORD,
     MONGO_AUTHENTICATION_SOURCE,
     JWT_SECRET_KEY,
+    UPLOAD_FOLDER,
+    MAX_CONTENT_LENGTH,
 )
 
 app = Flask(__name__)
@@ -28,8 +30,8 @@ app = Flask(__name__)
 jwt = JWTManager(app)
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
 
-app.config["UPLOAD_FOLDER"] = "/tmp"
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 
 
 @app.errorhandler(413)
