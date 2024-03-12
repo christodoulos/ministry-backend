@@ -80,6 +80,12 @@ def get_organization_label(label: str):
 # Organization Units Routes
 
 
+@apografi.route("/organizationUnit", methods=["GET"])
+def get_organization_unit():
+    organization = OrganizationalUnit.objects().only("code", "preferredLabel").exclude("id")
+    return Response(organization.to_json(), mimetype="application/json", status=200)
+
+
 @apografi.route("/organization/<string:code>/units", methods=["GET"])
 def get_organization_units(code: str):
     try:

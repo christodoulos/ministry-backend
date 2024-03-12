@@ -2,6 +2,7 @@ import json
 from flask import Blueprint, Response
 
 from src.models.apografi.organization import Organization
+from src.models.apografi.organizational_unit import OrganizationalUnit
 from src.models.psped import Foreas
 
 psped = Blueprint("psped", __name__)
@@ -70,3 +71,38 @@ def get_all_foreas():
         mimetype="application/json",
         status=200,
     )
+
+
+# monades
+
+
+@psped.route("/monada/all", methods=["GET"])
+def get_all_monades():
+    data = (
+        OrganizationalUnit.objects.only("code", "preferredLabel", "unitType", "supervisorUnitCode")
+        .exclude("id")
+        .order_by("preferredLabel")
+    )
+
+    return Response(
+        data.to_json(),
+        mimetype="application/json",
+        status=200,
+    )
+
+
+@psped.route("/monada/<string:code>", methods=["GET"])
+def get_monada(code: str):
+    try:
+        monada = OrganizationalUnit.objects.get(code=code)
+        return Response(
+            monada.to_json_enchanced(),
+            mimetype="application/json",
+            status=200,
+        )
+    except OrganizationalUnit.DoesNotExist:
+        return Response(
+            json.dumps({"error": f"Δεν βρέθηκε μονάδα με κωδικό {code}"}),
+            mimetype="application/json",
+            status=404,
+        )
