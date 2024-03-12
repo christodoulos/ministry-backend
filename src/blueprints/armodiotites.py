@@ -41,7 +41,7 @@ def create_remit():
         # Assume data contains all required fields except those that are auto-generated
         remit_code: str = Remit.generate_remit_code()
         data['remitCode'] = remit_code
-        new_remit = Remit(**data)
+        new_remit = Remit(**data) # TODO Edw nomizw ektos apo to remit code theelei na vriskei apo ti vasi kai to unitCode...
         new_remit.save()
         return Response(new_remit.to_json(),
                         mimetype="application/json",

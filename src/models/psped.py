@@ -57,7 +57,7 @@ class Foreas(me.Document):
 
 
 class Remit(me.Document):
-    meta = {'collection': 'remits', 'db_alias': 'psped'}
+    meta = {'collection': 'remits', 'db_alias': 'psped'} # TODO alias changed to apografi
 
     remitCode = me.StringField(required=True,
                                unique=True)
