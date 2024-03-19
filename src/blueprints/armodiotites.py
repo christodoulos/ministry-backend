@@ -3,6 +3,9 @@ from flask import Blueprint, Response, request
 
 from src.models.psped import Remit, LegalProvision
 from src.models.apografi.organizational_unit import OrganizationalUnit
+from src.models.utils import Log
+
+from deepdiff import DeepDiff
 
 remit = Blueprint("armodiotites", __name__)
 
@@ -39,7 +42,7 @@ def retrieve_armodiotita(remitCode: str):
 def create_remit():
     try:
         data = request.get_json()
-        # Assume data contains all required fields except those that are auto-generated
+        # Assume data contains all required fields except those that are auto-generated (shouldnt we check that?)
         remit_code: str = Remit.generate_remit_code()
         data['remitCode'] = remit_code
         # check if unitCode exists 
@@ -78,6 +81,10 @@ def update_remit(remitCode):
             mimetype="application/json",
             status=404,
         )
+
+    # Log the differences
+    diff = DeepDiff(data, remit)
+    if diff: Log(entity="remit", action="update", doc_id=data["remitCode"], value=diff)
 
     # Manually update each field
     try:
