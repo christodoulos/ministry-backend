@@ -40,7 +40,7 @@ def upload_file():
         )
         file_upload.save()
 
-        return Response(json.dumps({"msg": "File uploaded"}), status=200)
+        return Response(json.dumps({"file_id": file_id}), status=200)
 
     return Response(json.dumps({"msg": "File not uploaded"}), status=400)
 
