@@ -1,7 +1,7 @@
 import json
 from flask import Blueprint, Response, request
 
-from src.models.psped import Remit
+from src.models.psped import Remit, LegalProvision
 from src.models.apografi.organizational_unit import OrganizationalUnit
 
 remit = Blueprint("armodiotites", __name__)
@@ -42,6 +42,16 @@ def create_remit():
         # Assume data contains all required fields except those that are auto-generated
         remit_code: str = Remit.generate_remit_code()
         data['remitCode'] = remit_code
+        # check if unitCode exists 
+        exists = OrganizationalUnit.objects(code=data["unitCode"]).first()
+        if not exists:
+            # TODO - Edw ti na kanoyme an exei kanei lathos
+        # check if legalProvisionsCodes exist
+        lpCodes = data['legalProvisionsCodes']
+        for provisioncode in lpCodes:
+            exists = LegalProvision.objects(code=provisioncode).first()
+            if not exists:
+                # TODO - na to petaw isws an den vriskei tipota
         new_remit = Remit(**data) 
         new_remit.save()
         return Response(new_remit.to_json(),
