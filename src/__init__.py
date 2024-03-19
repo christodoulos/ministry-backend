@@ -8,8 +8,8 @@ from src.blueprints.apografi import apografi
 from src.blueprints.psped import psped
 from src.blueprints.stats import stats
 from src.blueprints.armodiotites import remit
-from src.blueprints.legal_provisions import legal_provisions
-from src.blueprints.legal_acts import legal_acts
+from src.blueprints.diataxeis import diataxeis
+from src.blueprints.nomikes_praxeis import nomikes_praxeis
 
 app = Flask(__name__)
 
@@ -34,8 +34,9 @@ app.register_blueprint(stats, url_prefix="/apografi/stats")
 app.register_blueprint(psped, url_prefix="/psped")
 app.register_blueprint(remit, url_prefix="/remit")
 
-app.register_blueprint(legal_provisions, url_prefix="/legal_provisions")
-app.register_blueprint(legal_acts, url_prefix="/legal_acts")
+app.register_blueprint(diataxeis, url_prefix="/diataxeis")
+app.register_blueprint(nomikes_praxeis, url_prefix="/nomikes_praxeis")
+
 # Swagger configuration
 SWAGGER_URL = "/docs"
 API_URL = "/static/swagger.json"

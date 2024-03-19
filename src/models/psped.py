@@ -59,8 +59,7 @@ class Foreas(me.Document):
 class Remit(me.Document):
     meta = {'collection': 'remits', 'db_alias': 'psped'}
 
-    remitCode = me.StringField(required=True,
-                               unique=True)
+    remitCode = me.StringField(required=True, unique=True)
     remitText = me.StringField(required=True)
     remitType = me.StringField(
         required=True,
@@ -73,7 +72,7 @@ class Remit(me.Document):
     COFOG_2ndLevel = me.StringField(required=True)
     thematic_3rdLevel = me.StringField(required=True)
     status = me.StringField(required=True, choices=['Ενεργή', 'Ανενεργή'])
-    legalProvisionsCodes = me.ListField(me.StringField(), required=True)
+    diataxisCodes = me.ListField(me.StringField(), required=True)
     creationDate = me.DateField(default=datetime.now)
     userCode = me.StringField(required=True)
     updateDate = me.DateField()
@@ -98,8 +97,14 @@ class Remit(me.Document):
         return super(Remit, self).save(*args, **kwargs)
 
 
-class LegalProvision(me.Document):
-    meta = {'collection': 'legal_provisions', 'db_alias': 'psped'}
+class Abolition(me.EmbeddedDocument):
+    abolishingLegalProvisionCode = me.StringField(required=True)
+    entryDate = me.DateTimeField(required=True)
+    userCode = me.StringField(required=True)
+
+
+class Diataxi(me.Document):
+    meta = {'collection': 'diataxeis', 'db_alias': 'psped'}
 
     legalProvisionCode = me.StringField(required=True, unique=True)
     legalActCode = me.StringField(required=True)
@@ -109,34 +114,46 @@ class LegalProvision(me.Document):
     creationDate = me.DateTimeField(default=datetime.now)
     userCode = me.StringField(required=True)
     updateDate = me.DateTimeField()
-    abolition = me.DictField()
-    abolishingLegalProvisionCode = me.StringField()
-    entryDate = me.DateTimeField()
+    abolition = me.EmbeddedDocumentField(Abolition)
 
     @classmethod
-    def generate_legal_provision_code(cls):
+    def generate_diataxi_code(cls):
         last_code = cls.objects.order_by('-legalProvisionCode').first()
         if last_code:
             last_number = int(last_code.legalProvisionCode[1:])
             new_number = last_number + 1
         else:
             new_number = 1
-        return f'P{new_number:09d}'
+
+        return f'P{new_number:08d}'
 
 
-class LegalAct(me.Document):
-    meta = {'collection': 'legal_acts', 'db_alias': 'psped'}
+class FEKdate(me.EmbeddedDocument):
+    day = me.IntField(required=True)
+    month = me.IntField(required=True)
+    year = me.IntField(required=True)
+
+
+class FEKDiataxi(me.EmbeddedDocument):
+    FEKnumber = me.StringField(required=True)
+    FEKissue = me.StringField(required=True)
+    FEKdate = me.EmbeddedDocumentField(FEKdate)
+
+
+class NomikiPraxi(me.Document):
+    meta = {'collection': 'nomikes_praxeis', 'db_alias': 'psped'}
 
     legalActCode = me.StringField(required=True, unique=True)
     legalActType = me.StringField(required=True,
-                                  choices=[
-                                      'Νόμος', 'Προεδρικό Διάταγμα',
-                                      'Κανονιστική Διοικητική Πράξη',
-                                      'Απόφαση του οργάνου διοίκησης', 'Άλλο'
-                                  ])
+                                     choices=[
+                                         'Νόμος', 'Προεδρικό Διάταγμα',
+                                         'Κανονιστική Διοικητική Πράξη',
+                                         'Απόφαση του οργάνου διοίκησης',
+                                         'Άλλο'
+                                     ])
     legalActNumber = me.StringField(required=True)
     legalActDate = me.DateField(required=True)
-    FEKref = me.DictField(required=True)
+    FEKref = me.EmbeddedDocumentField(FEKDiataxi)
     DiavgeiaNumber = me.StringField()
     legalActFile = me.FileField()
     userCode = me.StringField(required=True)
@@ -144,11 +161,11 @@ class LegalAct(me.Document):
     updateDate = me.DateTimeField()
 
     @classmethod
-    def generate_legal_act_code(cls):
+    def generate_nomiki_praxi_code(cls):
         last_code = cls.objects.order_by('-legalActCode').first()
         if last_code:
             last_number = int(last_code.legalActCode[1:])
             new_number = last_number + 1
         else:
             new_number = 1
-        return f'L{new_number:09d}'
+        return f'L{new_number:08d}'
