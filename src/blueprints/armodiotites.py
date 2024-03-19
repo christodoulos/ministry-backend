@@ -2,6 +2,7 @@ import json
 from flask import Blueprint, Response, request
 
 from src.models.psped import Remit
+from src.models.apografi.organizational_unit import OrganizationalUnit
 
 remit = Blueprint("armodiotites", __name__)
 
@@ -20,9 +21,9 @@ def retrieve_all_remit():
 def retrieve_armodiotita(remitCode: str):
 
     try:
-        organization = Remit.objects.get(remitCode=remitCode)
+        remit = Remit.objects.get(remitCode=remitCode)
         return Response(
-            organization.to_json(),
+            remit.to_json(),
             mimetype="application/json",
             status=200,
         )
@@ -41,7 +42,7 @@ def create_remit():
         # Assume data contains all required fields except those that are auto-generated
         remit_code: str = Remit.generate_remit_code()
         data['remitCode'] = remit_code
-        new_remit = Remit(**data) # TODO Edw nomizw ektos apo to remit code theelei na vriskei apo ti vasi kai to unitCode...
+        new_remit = Remit(**data) 
         new_remit.save()
         return Response(new_remit.to_json(),
                         mimetype="application/json",
