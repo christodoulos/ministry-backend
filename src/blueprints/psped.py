@@ -8,12 +8,12 @@ from src.models.psped import Foreas
 psped = Blueprint("psped", __name__)
 
 
-@psped.route("/foreas/<string:code>", methods=["GET"])
+@psped.route("/foreas/<string:code>")
 def get_foreas(code: str):
     try:
         organization = Organization.objects.get(code=code)
         return Response(
-            organization.to_json_enchanced(),
+            organization.to_json_enhanced(),
             mimetype="application/json",
             status=200,
         )
@@ -25,7 +25,7 @@ def get_foreas(code: str):
         )
 
 
-@psped.route("/foreas/<string:code>/tree", methods=["GET"])
+@psped.route("/foreas/<string:code>/tree")
 def get_foreas_tree(code: str):
     try:
         foreas = Foreas.objects.get(code=code)
@@ -42,7 +42,7 @@ def get_foreas_tree(code: str):
         )
 
 
-@psped.route("/foreas/<string:code>/enchanched", methods=["GET"])
+@psped.route("/foreas/<string:code>/enchanched")
 def get_foreas_enchanced(code: str):
     try:
         foreas = Foreas.objects.get(code=code)
@@ -59,7 +59,7 @@ def get_foreas_enchanced(code: str):
         )
 
 
-@psped.route("/foreas/all", methods=["GET"])
+@psped.route("/foreas/all")
 def get_all_foreas():
     data = (
         Organization.objects.only("code", "organizationType", "preferredLabel", "subOrganizationOf", "status")
@@ -76,7 +76,7 @@ def get_all_foreas():
 # monades
 
 
-@psped.route("/monada/all", methods=["GET"])
+@psped.route("/monada/all")
 def get_all_monades():
     data = (
         OrganizationalUnit.objects.only("code", "preferredLabel", "unitType", "supervisorUnitCode")
@@ -91,7 +91,7 @@ def get_all_monades():
     )
 
 
-@psped.route("/monada/<string:code>", methods=["GET"])
+@psped.route("/monada/<string:code>")
 def get_monada(code: str):
     try:
         monada = OrganizationalUnit.objects.get(code=code)

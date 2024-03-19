@@ -198,7 +198,7 @@ class Organization(me.Document):
         data = {k: v for k, v in data.items() if v}
         return json.dumps(data, cls=JSONEncoder)
 
-    def to_json_enchanced(self):
+    def to_json_enhanced(self):
         data = self.to_mongo().to_dict()
         data.pop("_id")
         data["purpose"] = self.purposeDetails
