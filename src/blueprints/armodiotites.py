@@ -1,7 +1,11 @@
 import json
 from flask import Blueprint, Response, request
 
-from src.models.psped import Remit
+from src.models.psped import Remit, LegalProvision
+from src.models.apografi.organizational_unit import OrganizationalUnit
+from src.models.utils import Log
+
+from deepdiff import DeepDiff
 
 remit = Blueprint("armodiotites", __name__)
 
@@ -20,9 +24,9 @@ def retrieve_all_remit():
 def retrieve_armodiotita(remitCode: str):
 
     try:
-        organization = Remit.objects.get(remitCode=remitCode)
+        remit = Remit.objects.get(remitCode=remitCode)
         return Response(
-            organization.to_json(),
+            remit.to_json(),
             mimetype="application/json",
             status=200,
         )
@@ -38,10 +42,20 @@ def retrieve_armodiotita(remitCode: str):
 def create_remit():
     try:
         data = request.get_json()
-        # Assume data contains all required fields except those that are auto-generated
+        # Assume data contains all required fields except those that are auto-generated (shouldnt we check that?)
         remit_code: str = Remit.generate_remit_code()
         data['remitCode'] = remit_code
-        new_remit = Remit(**data)
+        # check if unitCode exists 
+        exists = OrganizationalUnit.objects(code=data["unitCode"]).first()
+        if not exists:
+            # TODO - Edw ti na kanoyme an exei kanei lathos
+        # check if legalProvisionsCodes exist
+        lpCodes = data['legalProvisionsCodes']
+        for provisioncode in lpCodes:
+            exists = LegalProvision.objects(code=provisioncode).first()
+            if not exists:
+                # TODO - na to petaw isws an den vriskei tipota
+        new_remit = Remit(**data) 
         new_remit.save()
         return Response(new_remit.to_json(),
                         mimetype="application/json",
@@ -67,6 +81,10 @@ def update_remit(remitCode):
             mimetype="application/json",
             status=404,
         )
+
+    # Log the differences
+    diff = DeepDiff(data, remit)
+    if diff: Log(entity="remit", action="update", doc_id=data["remitCode"], value=diff)
 
     # Manually update each field
     try:
