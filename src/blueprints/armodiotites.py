@@ -4,9 +4,6 @@ from flask import Blueprint, Response, request
 
 from src.models.psped import Remit, Diataxi
 from src.models.apografi.organizational_unit import OrganizationalUnit
-from src.models.utils import Log
-
-from deepdiff import DeepDiff
 
 remit = Blueprint("armodiotites", __name__)
 
