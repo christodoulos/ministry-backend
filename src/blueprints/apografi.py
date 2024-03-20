@@ -57,16 +57,21 @@ def get_organization():
     return Response(organization.to_json(), mimetype="application/json", status=200)
 
 
-@apografi.route("/organization/<string:code>")
-def get_organization_id(code: str):
-    try:
-        doc = Organization.objects().get(code=code)
-        return Response(doc.to_json(), mimetype="application/json", status=200)
-    except Exception as e:
-        error = {"error": str(e)}
-        return Response(json.dumps(error), mimetype="application/json", status=404)
+@apografi.route("/organization/all")
+def get_all_organizations():
+    data = (
+        Organization.objects.only("code", "organizationType", "preferredLabel", "subOrganizationOf", "status")
+        .exclude("id")
+        .order_by("preferredLabel")
+    )
+    return Response(
+        data.to_json(),
+        mimetype="application/json",
+        status=200,
+    )
 
-@apografi.route("/organization/<string:code>/enhanced")
+
+@apografi.route("/organization/<string:code>")
 def get_organization_enhanced(code: str):
     try:
         doc = Organization.objects().get(code=code)
@@ -74,6 +79,7 @@ def get_organization_enhanced(code: str):
     except Exception as e:
         error = {"error": str(e)}
         return Response(json.dumps(error), mimetype="application/json", status=404)
+
 
 @apografi.route("/organization/<string:label>/label")
 def get_organization_label(label: str):
@@ -85,50 +91,42 @@ def get_organization_label(label: str):
         return Response(json.dumps(error), mimetype="application/json", status=404)
 
 
-# Organization Units Routes
+# Organizational Units Routes
 
 
-@apografi.route("/organizationUnit")
+@apografi.route("/organizationalUnit")
 def get_organization_unit():
     organization = OrganizationalUnit.objects().only("code", "preferredLabel").exclude("id")
     return Response(organization.to_json(), mimetype="application/json", status=200)
 
 
-@apografi.route("/organization/<string:code>/units")
-def get_organization_units(code: str):
+@apografi.route("/organizationalUnit/all")
+def get_all_organizational_units():
+    data = (
+        OrganizationalUnit.objects.only("code", "preferredLabel", "unitType", "supervisorUnitCode")
+        .exclude("id")
+        .order_by("preferredLabel")
+    )
+
+    return Response(
+        data.to_json(),
+        mimetype="application/json",
+        status=200,
+    )
+
+
+@apografi.route("/organizationalUnit/<string:code>")
+def get_organizational_unit(code: str):
     try:
-        docs = OrganizationalUnit.objects(organizationCode=code)
-        return Response(docs.to_json(), mimetype="application/json", status=200)
-    except Exception as e:
-        error = {"error": str(e)}
-        return Response(json.dumps(error), mimetype="application/json", status=404)
-
-
-@apografi.route("/organization/<string:code>/general-directorates")
-def get_organization_general_directorates(code: str):
-    try:
-        docs = OrganizationalUnit.objects(organizationCode=code, unitType=3)
-        return Response(docs.to_json(), mimetype="application/json", status=200)
-    except Exception as e:
-        error = {"error": str(e)}
-        return Response(json.dumps(error), mimetype="application/json", status=404)
-
-
-@apografi.route( "/organization/<string:code>/<string:gen_dir_code>/directorates" )  # fmt: skip
-def get_organization_directorates(code: str, gen_dir_code: str):
-    try:
-        docs = OrganizationalUnit.objects(organizationCode=code, supervisorUnitCode=gen_dir_code)
-        return Response(docs.to_json(), mimetype="application/json", status=200)
-    except Exception as e:
-        error = {"error": str(e)}
-        return Response(json.dumps(error), mimetype="application/json", status=404)
-
-
-@apografi.route( "/organization/<string:code>/<string:dir_code>/departments", )  # fmt: skip
-def get_organization_departments(code: str, dir_code: str):
-    try:
-        docs = OrganizationalUnit.objects(organizationCode=code, supervisorUnitCode=dir_code, unitType=2)
-        return Response(docs.to_json(), mimetype="application/json", status=200)
-    except Exception as e:
-        error = {"error": str(e)}
-        return Response(json.dumps(error), mimetype="application/json", status=404)
+        monada = OrganizationalUnit.objects.get(code=code)
+        return Response(
+            monada.to_json_enhanced(),
+            mimetype="application/json",
+            status=200,
+        )
+    except OrganizationalUnit.DoesNotExist:
+        return Response(
+            json.dumps({"error": f"Δεν βρέθηκε μονάδα με κωδικό {code}"}),
+            mimetype="application/json",
+            status=404,
+        )

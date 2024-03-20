@@ -1,5 +1,14 @@
 from src.config import MONGO_PSPED_DB
+from src.models.apografi.organization import Organization
+from src.models.apografi.organizational_unit import OrganizationalUnit
 import mongoengine as me
+
+
+class UserRole(me.EmbeddedDocument):
+    role = me.StringField(required=True, choices=["EDITOR", "READER", "ADMIN", "ROOT"], default="READER")
+    active = me.BooleanField(required=True, default=True)
+    foreas = me.ListField(me.ReferenceField(Organization), default=[])
+    monades = me.ListField(me.ReferenceField(OrganizationalUnit), default=[])
 
 
 class User(me.Document):
@@ -10,6 +19,7 @@ class User(me.Document):
     googleId = me.StringField(required=True)
     photoUrl = me.StringField(required=True)
     provider = me.StringField(required=True, choices=["GOOGLE"], default="GOOGLE")
+    roles = me.EmbeddedDocumentListField(UserRole, default=[UserRole(role="READER")])
 
     meta = {"collection": "users", "db_alias": MONGO_PSPED_DB}
 
