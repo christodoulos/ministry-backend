@@ -13,10 +13,8 @@ from src.blueprints.nomikes_praxeis import nomikes_praxeis
 
 app = Flask(__name__)
 
-connect(db="apografi",
-        alias="apografi",
-        host='mongodb://localhost:27017/apografi')
-connect(db="psped", alias="psped", host='mongodb://localhost:27017/psped')
+connect(db="apografi", alias="apografi")
+connect(db="psped", alias="psped")
 
 # CORS configuration
 cors = CORS(
