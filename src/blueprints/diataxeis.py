@@ -73,7 +73,7 @@ def update_diataxi(code: str):
     if any(field in update_fields for field in immutable_fields):
         return Response(json.dumps({
             "error":
-            "Μη επιτρεπτή ενημέρωση πεδίων: legalActCode, diataxiNumber, diataxiText, creationDate, userCode"
+            "Μη επιτρεπτή ενημέρωση πεδίων: legalActCode, creationDate, userCode"
         }),
                         mimetype="application/json",
                         status=400)
