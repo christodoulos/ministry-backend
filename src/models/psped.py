@@ -57,7 +57,7 @@ class Foreas(me.Document):
 
 
 class Remit(me.Document):
-    meta = {'collection': 'remits', 'db_alias': 'psped'} # TODO alias changed to apografi
+    meta = {'collection': 'remits', 'db_alias': 'psped'}
 
     remitCode = me.StringField(required=True, unique=True)
     remitText = me.StringField(required=True)
@@ -91,8 +91,6 @@ class Remit(me.Document):
         return f'A{new_number:08d}'
 
     def save(self, *args, **kwargs):
-        # if not self.creationDate:
-        #     self.creationDate = datetime.now()
         self.updateDate = datetime.now()
         return super(Remit, self).save(*args, **kwargs)
 
@@ -104,7 +102,7 @@ class Abolition(me.EmbeddedDocument):
 
 
 class Diataxi(me.Document):
-    meta = {'collection': 'diataxeis', 'db_alias': 'psped'}
+    meta = {'collection': 'diataxeis', 'db_alias': 'psped'} 
 
     legalProvisionCode = me.StringField(required=True, unique=True)
     legalActCode = me.StringField(required=True)
