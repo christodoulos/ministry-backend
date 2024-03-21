@@ -1,5 +1,6 @@
 #!venv/bin/python
-from src.models.apografi import Organization, OrganizationalUnit
+from src.models.apografi.organization import Organization
+from src.models.apografi.organizational_unit import OrganizationalUnit
 from src.models.psped import Apografi, Foreas
 
 for organization in Organization.objects():

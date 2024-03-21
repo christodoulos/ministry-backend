@@ -40,7 +40,8 @@ def google_auth():
         ).save()
 
     user = User.get_user_by_email(id_info["email"]).to_mongo_dict()
-    access_token = create_access_token(identity=id_info["email"])
+    additional_claims = {"roles": user["roles"]}
+    access_token = create_access_token(identity=id_info["email"], additional_claims=additional_claims)
 
     return Response(json.dumps({"accessToken": access_token, "user": user}), status=200)
 

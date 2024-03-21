@@ -58,7 +58,7 @@ class Foreas(me.Document):
     code = me.StringField(required=True, unique=True)
     level = me.StringField(
         choices=["ΚΕΝΤΡΙΚΟ", "ΑΠΟΚΕΝΤΡΩΜΕΝΟ", "ΠΕΡΙΦΕΡΕΙΑΚΟ", "ΤΟΠΙΚΟ", "ΜΗ ΟΡΙΣΜΕΝΟ"],
-        default="MH ΟΡΙΣΜΕΝΟ",
+        default="ΜΗ ΟΡΙΣΜΕΝΟ",
     )
     apografi = me.EmbeddedDocumentField(Apografi, required=True)
     tree = me.EmbeddedDocumentListField(TreeNode)
