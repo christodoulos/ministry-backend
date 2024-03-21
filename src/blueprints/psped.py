@@ -10,9 +10,10 @@ psped = Blueprint("psped", __name__)
 @psped.route("/foreas/<string:code>")
 def get_foreas(code: str):
     try:
-        foreas = Foreas.objects(code=code).only("code", "level").exclude("id")
+        foreas = Foreas.objects.only("code", "level").exclude("id").get(code=code)
         return Response(
-            json.dumps(foreas.to_json()),
+            # json.dumps(foreas.to_json()),
+            foreas.to_json(),
             mimetype="application/json",
             status=200,
         )

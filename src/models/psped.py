@@ -57,10 +57,7 @@ class Foreas(me.Document):
 
     code = me.StringField(required=True, unique=True)
     level = me.StringField(
-        choices=[
-            "ΚΕΝΤΡΙΚΟ", "ΑΠΟΚΕΝΤΡΩΜΕΝΟ", "ΠΕΡΙΦΕΡΕΙΑΚΟ", "ΤΟΠΙΚΟ",
-            "ΜΗ ΟΡΙΣΜΕΝΟ"
-        ],
+        choices=["ΚΕΝΤΡΙΚΟ", "ΑΠΟΚΕΝΤΡΩΜΕΝΟ", "ΠΕΡΙΦΕΡΕΙΑΚΟ", "ΤΟΠΙΚΟ", "ΜΗ ΟΡΙΣΜΕΝΟ"],
         default="MH ΟΡΙΣΜΕΝΟ",
     )
     apografi = me.EmbeddedDocumentField(Apografi, required=True)
@@ -94,7 +91,7 @@ class Foreas(me.Document):
         for root in tree:
             flat_nodes.extend(convert_tree_to_flat_nodes(root))
         Foreas.objects(code=self.code).update_one(set__tree=flat_nodes)
-        
+
     def tree_to_json(self):
         self.build_tree()
         tree = []
@@ -111,22 +108,27 @@ class Foreas(me.Document):
             )
         return tree
 
+
 class Remit(me.Document):
-    meta = {'collection': 'remits', 'db_alias': 'psped'}
+    meta = {"collection": "remits", "db_alias": "psped"}
 
     remitCode = me.StringField(required=True, unique=True)
     remitText = me.StringField(required=True)
     remitType = me.StringField(
         required=True,
         choices=[
-            'Επιτελική', 'Εκτελεστική', 'Υποστηρικτική', 'Ελεγκτική',
-            'Παρακολούθηση αποτελεσματικής πολιτικής και αξιολόγηση αποτελεσμάτων'
-        ])
+            "Επιτελική",
+            "Εκτελεστική",
+            "Υποστηρικτική",
+            "Ελεγκτική",
+            "Παρακολούθηση αποτελεσματικής πολιτικής και αξιολόγηση αποτελεσμάτων",
+        ],
+    )
     unitCode = me.StringField(required=True)
     COFOG_1stLevel = me.StringField(required=True)
     COFOG_2ndLevel = me.StringField(required=True)
     thematic_3rdLevel = me.StringField(required=True)
-    status = me.StringField(required=True, choices=['Ενεργή', 'Ανενεργή'])
+    status = me.StringField(required=True, choices=["Ενεργή", "Ανενεργή"])
     diataxisCodes = me.ListField(me.StringField(), required=True)
     creationDate = me.DateField(default=datetime.now)
     userCode = me.StringField(required=True)
@@ -135,15 +137,13 @@ class Remit(me.Document):
     @classmethod
     def generate_remit_code(cls):
         # Attempt to find the highest current remit code and increment it
-        last_remit = cls.objects.order_by('-remitCode').first()
+        last_remit = cls.objects.order_by("-remitCode").first()
         if last_remit:
-            last_number = int(
-                last_remit.remitCode[1:]
-            )  # Exclude the first character ('A') and convert to int
+            last_number = int(last_remit.remitCode[1:])  # Exclude the first character ('A') and convert to int
             new_number = last_number + 1
         else:
             new_number = 1  # Start from 1 if no remits exist
-        return f'A{new_number:08d}'
+        return f"A{new_number:08d}"
 
     def save(self, *args, **kwargs):
         self.updateDate = datetime.now()
@@ -157,7 +157,7 @@ class Abolition(me.EmbeddedDocument):
 
 
 class Diataxi(me.Document):
-    meta = {'collection': 'diataxeis', 'db_alias': 'psped'} 
+    meta = {"collection": "diataxeis", "db_alias": "psped"}
 
     legalProvisionCode = me.StringField(required=True, unique=True)
     legalActCode = me.StringField(required=True)
@@ -171,14 +171,14 @@ class Diataxi(me.Document):
 
     @classmethod
     def generate_diataxi_code(cls):
-        last_code = cls.objects.order_by('-legalProvisionCode').first()
+        last_code = cls.objects.order_by("-legalProvisionCode").first()
         if last_code:
             last_number = int(last_code.legalProvisionCode[1:])
             new_number = last_number + 1
         else:
             new_number = 1
 
-        return f'P{new_number:08d}'
+        return f"P{new_number:08d}"
 
 
 class FEKdate(me.EmbeddedDocument):
@@ -194,16 +194,19 @@ class FEKDiataxi(me.EmbeddedDocument):
 
 
 class NomikiPraxi(me.Document):
-    meta = {'collection': 'nomikes_praxeis', 'db_alias': 'psped'}
+    meta = {"collection": "nomikes_praxeis", "db_alias": "psped"}
 
     legalActCode = me.StringField(required=True, unique=True)
-    legalActType = me.StringField(required=True,
-                                     choices=[
-                                         'Νόμος', 'Προεδρικό Διάταγμα',
-                                         'Κανονιστική Διοικητική Πράξη',
-                                         'Απόφαση του οργάνου διοίκησης',
-                                         'Άλλο'
-                                     ])
+    legalActType = me.StringField(
+        required=True,
+        choices=[
+            "Νόμος",
+            "Προεδρικό Διάταγμα",
+            "Κανονιστική Διοικητική Πράξη",
+            "Απόφαση του οργάνου διοίκησης",
+            "Άλλο",
+        ],
+    )
     legalActNumber = me.StringField(required=True)
     legalActDate = me.DateField(required=True)
     FEKref = me.EmbeddedDocumentField(FEKDiataxi)
@@ -215,10 +218,10 @@ class NomikiPraxi(me.Document):
 
     @classmethod
     def generate_nomiki_praxi_code(cls):
-        last_code = cls.objects.order_by('-legalActCode').first()
+        last_code = cls.objects.order_by("-legalActCode").first()
         if last_code:
             last_number = int(last_code.legalActCode[1:])
             new_number = last_number + 1
         else:
             new_number = 1
-        return f'L{new_number:08d}'
+        return f"L{new_number:08d}"
