@@ -1,22 +1,22 @@
 import json
 from flask import Blueprint, Response
 
-from src.models.apografi.organization import Organization
+
 from src.models.psped import Foreas
 
 psped = Blueprint("psped", __name__)
 
 
-@psped.route("/foreas/<string:code>", methods=["GET"])
+@psped.route("/foreas/<string:code>")
 def get_foreas(code: str):
     try:
-        organization = Organization.objects.get(code=code)
+        foreas = Foreas.objects(code=code).only("code", "level").exclude("id")
         return Response(
-            organization.to_json_enchanced(),
+            json.dumps(foreas.to_json()),
             mimetype="application/json",
             status=200,
         )
-    except Organization.DoesNotExist:
+    except Foreas.DoesNotExist:
         return Response(
             json.dumps({"error": f"Δεν βρέθηκε φορέας με κωδικό {code}"}),
             mimetype="application/json",
@@ -24,12 +24,12 @@ def get_foreas(code: str):
         )
 
 
-@psped.route("/foreas/<string:code>/enchanched", methods=["GET"])
-def get_foreas_enchanced(code: str):
+@psped.route("/foreas/<string:code>/tree")
+def get_foreas_tree(code: str):
     try:
         foreas = Foreas.objects.get(code=code)
         return Response(
-            foreas.to_json_enchanced(),
+            json.dumps(foreas.tree_to_json()),
             mimetype="application/json",
             status=200,
         )
