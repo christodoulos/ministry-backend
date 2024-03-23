@@ -4,6 +4,7 @@ import mongoengine as me
 
 from src.models.apografi.organization import Organization
 from src.models.apografi.organizational_unit import OrganizationalUnit
+from src.models.upload import FileUpload
 from src.models.utils import JSONEncoder
 
 
@@ -200,20 +201,21 @@ class NomikiPraxi(me.Document):
     legalActType = me.StringField(
         required=True,
         choices=[
-            "Νόμος",
-            "Προεδρικό Διάταγμα",
-            "Κανονιστική Διοικητική Πράξη",
-            "Απόφαση του οργάνου διοίκησης",
-            "Άλλο",
+            "ΝΟΜΟΣ",
+            "ΠΡΟΕΔΡΙΚΟ ΔΙΑΤΑΓΜΑ",
+            "ΚΑΝΟΝΙΣΤΙΚΗ ΔΙΟΙΚΗΤΙΚΗ ΠΡΑΞΗ",
+            "ΑΠΟΦΑΣΗ ΤΟΥ ΟΡΓΑΝΟΥ ΔΙΟΙΚΗΣΗΣ",
+            "ΑΛΛΟ",
         ],
     )
+    legalActTypeOther = me.StringField()
     legalActNumber = me.StringField(required=True)
     legalActDate = me.DateField(required=True)
     FEKref = me.EmbeddedDocumentField(FEKDiataxi)
     DiavgeiaNumber = me.StringField()
-    legalActFile = me.FileField()
+    legalActFile = me.ReferenceField(FileUpload)
     userCode = me.StringField(required=True)
-    creationDate = me.DateTimeField(default=datetime.now)
+    creationDate = me.DateTimeField(default=datetime.now())
     updateDate = me.DateTimeField()
 
     @classmethod
@@ -225,3 +227,19 @@ class NomikiPraxi(me.Document):
         else:
             new_number = 1
         return f"L{new_number:08d}"
+
+    def save(self, *args, **kwargs):
+        if self.legalActType == "ΑΛΛΟ":
+            if not self.legalActTypeOther:
+                raise ValueError("Ο τύπος πράξης δεν μπορεί να είναι κενός ενώ επιλέξατε 'ΑΛΛΟ'")
+            if self.legalActTypeOther in [
+                "ΝΟΜΟΣ",
+                "ΠΡΟΕΔΡΙΚΟ ΔΙΑΤΑΓΜΑ",
+                "ΚΑΝΟΝΙΣΤΙΚΗ ΔΙΟΙΚΗΤΙΚΗ ΠΡΑΞΗ",
+                "ΑΠΟΦΑΣΗ ΤΟΥ ΟΡΓΑΝΟΥ ΔΙΟΙΚΗΣΗΣ",
+                "ΑΛΛΟ",
+            ]:
+                raise ValueError(
+                    "Ο τύπος πράξης δεν μπορεί να είναι κάποια από τις τιμές 'ΝΟΜΟΣ', 'ΠΡΟΕΔΡΙΚΟ ΔΙΑΤΑΓΜΑ', 'ΚΑΝΟΝΙΣΤΙΚΗ ΔΙΟΙΚΗΤΙΚΗ ΠΡΑΞΗ', 'ΑΠΟΦΑΣΗ ΤΟΥ ΟΡΓΑΝΟΥ ΔΙΟΙΚΗΣΗΣ', 'ΑΛΛΟ'"
+                )
+        super(NomikiPraxi, self).save(*args, **kwargs)
