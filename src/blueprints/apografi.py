@@ -130,3 +130,20 @@ def get_organizational_unit(code: str):
             mimetype="application/json",
             status=404,
         )
+
+
+@apografi.route("/organizationalUnit/<string:code>/organizationCode")
+def get_organizational_unit_organization_code(code: str):
+    try:
+        monada = OrganizationalUnit.objects.get(code=code)
+        return Response(
+            json.dumps({"organizationCode": monada.organizationCode}),
+            mimetype="application/json",
+            status=200,
+        )
+    except OrganizationalUnit.DoesNotExist:
+        return Response(
+            json.dumps({"error": f"Δεν βρέθηκε μονάδα με κωδικό {code}"}),
+            mimetype="application/json",
+            status=404,
+        )
