@@ -12,7 +12,7 @@ class Cofog2(me.EmbeddedDocument):
     cofog3 = me.ListField(me.EmbeddedDocumentField(Cofog3), required=True)
 
 
-class Cofog1(me.Document):
+class Cofog(me.Document):
     code = me.StringField(required=True)
     name = me.StringField(required=True)
     cofog2 = me.ListField(me.EmbeddedDocumentField(Cofog2), required=True)
