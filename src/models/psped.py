@@ -129,7 +129,7 @@ class Remit(me.Document):
     COFOG_1stLevel = me.StringField(required=True)
     COFOG_2ndLevel = me.StringField(required=True)
     thematic_3rdLevel = me.StringField(required=True)
-    status = me.StringField(required=True, choices=["Ενεργή", "Ανενεργή"])
+    status = me.StringField(required=True, choices=["ΕΝΕΡΓΗ", "ΑΝΕΝΕΡΓΗ"])
     diataxisCodes = me.ListField(me.StringField(), required=True)
     creationDate = me.DateField(default=datetime.now)
     userCode = me.StringField(required=True)
