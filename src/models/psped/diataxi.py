@@ -8,6 +8,20 @@ class Abolition(me.EmbeddedDocument):
     userCode = me.StringField(required=True)
 
 
+class LegalProvisionCode(me.EmbeddedDocument):
+    meros = me.StringField()
+    arthro = me.StringField()
+    paragrafos = me.StringField()
+    edafio = me.StringField()
+    pararthma = me.StringField()
+
+    def validate(self, clean=True):
+        super(LegalProvisionCode, self).validate(clean)
+        fields = [self.meros, self.arthro, self.paragrafos, self.edafio, self.pararthma]
+        if not any(fields):
+            raise me.ValidationError("LegalProvisionCode")
+
+
 class Diataxi(me.Document):
     meta = {"collection": "diataxeis", "db_alias": "psped"}
 
@@ -15,7 +29,7 @@ class Diataxi(me.Document):
     legalActCode = me.StringField(required=True)
     legalProvisionNumber = me.StringField(required=True)
     legalProvisionText = me.StringField(required=True)
-    regulatedObjectCode = me.StringField(required=True)
+    regulatedObjectCode = me.EmbeddedDocumentField(LegalProvisionCode)
     creationDate = me.DateTimeField(default=datetime.now)
     userCode = me.StringField(required=True)
     updateDate = me.DateTimeField()
