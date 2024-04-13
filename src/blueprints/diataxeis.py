@@ -1,8 +1,8 @@
 import json
 from datetime import datetime
 from flask import Blueprint, request, Response
-from src.models.psped import Diataxi
-from src.models.psped import NomikiPraxi, Abolition
+from src.models.psped.diataxi import Diataxi, Abolition
+from src.models.psped.nomiki_praxi import NomikiPraxi
 from mongoengine import ValidationError
 
 diataxeis = Blueprint("diataxeis", __name__)

@@ -13,20 +13,16 @@ class JSONEncoder(json.JSONEncoder):
 
 def convert_greek_accented_chars(text):
     normalized_text = unicodedata.normalize("NFD", text)
-    no_accent_text = "".join(
-        ch for ch in normalized_text if unicodedata.category(ch) != "Mn"
-    )
+    no_accent_text = "".join(ch for ch in normalized_text if unicodedata.category(ch) != "Mn")
     uppercase_text = no_accent_text.upper()
     return uppercase_text
 
 
-class Log(me.Document):
+class SyncLog(me.Document):
     meta = {"collection": "synclog", "db_alias": "apografi"}
 
     date = me.DateTimeField(default=datetime.now())
-    entity = me.StringField(
-        required=True, choices=["dictionary", "organization", "organizational-unit"]
-    )
+    entity = me.StringField(required=True, choices=["dictionary", "organization", "organizational-unit"])
     action = me.StringField(required=True, choices=["insert", "update"])
     doc_id = me.StringField(required=True)
     value = me.DictField(required=True)
@@ -36,8 +32,6 @@ class Error(me.Document):
     meta = {"collection": "errors", "db_alias": "apografi"}
 
     date = me.DateTimeField(default=datetime.now())
-    entity = me.StringField(
-        required=True, choices=["dictionary", "organization", "organizational-unit"]
-    )
+    entity = me.StringField(required=True, choices=["dictionary", "organization", "organizational-unit"])
     doc_id = me.StringField(required=True)
     value = me.DictField(required=True)

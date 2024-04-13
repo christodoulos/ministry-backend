@@ -2,7 +2,7 @@ import json
 from flask import Blueprint, Response, request
 from flask_jwt_extended import get_jwt_identity, jwt_required, get_jwt
 
-from src.models.psped import Foreas
+from src.models.psped.foreas import Foreas
 from src.blueprints.decorators import can_edit
 
 psped = Blueprint("psped", __name__)

@@ -1,7 +1,7 @@
 from src.models.apografi.organization import Organization
 from src.models.apografi.organizational_unit import OrganizationalUnit
 from src.models.apografi.embedded import Address, Spatial
-from src.models.utils import Log
+from src.models.utils import SyncLog as Log
 from src.apografi.utils import apografi_get
 from src.apografi.constants import APOGRAFI_ORGANIZATIONAL_UNITS_URL
 from deepdiff import DeepDiff
@@ -57,18 +57,14 @@ def sync_one_organization_units(units):
                 ).save()
         else:
             OrganizationalUnit(**doc).save()
-            Log(
-                entity="organizational-unit", action="insert", doc_id=doc_id, value=doc
-            ).save()
+            Log(entity="organizational-unit", action="insert", doc_id=doc_id, value=doc).save()
 
 
 def sync_organizational_units():
     print("Συγχρονισμός οργανωτικών μονάδων από την Απογραφή...")
     for organization in Organization.objects():
         print(f"{organization['code']} {organization['preferredLabel']}\n")
-        response = apografi_get(
-            f"{APOGRAFI_ORGANIZATIONAL_UNITS_URL}{organization['code']}"
-        )
+        response = apografi_get(f"{APOGRAFI_ORGANIZATIONAL_UNITS_URL}{organization['code']}")
 
         if response.status_code != 404:
             units = response.json()["data"]

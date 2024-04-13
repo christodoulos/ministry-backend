@@ -1,6 +1,6 @@
 from src.models.apografi.organization import Organization
 from src.models.apografi.embedded import Address, ContactPoint, FoundationFek, Spatial
-from src.models.utils import Log
+from src.models.utils import SyncLogLog as Log
 from src.apografi.utils import apografi_get
 from src.apografi.constants import APOGRAFI_ORGANIZATIONS_URL
 from deepdiff import DeepDiff
@@ -16,9 +16,7 @@ def sync_one_organization(organization_dict):
             value = sorted(value or [])
             doc[key] = value
         if key == "spatial":
-            value = sorted(
-                value or [], key=lambda x: (x.get("countryId", 0), x.get("cityId", 0))
-            )
+            value = sorted(value or [], key=lambda x: (x.get("countryId", 0), x.get("cityId", 0)))
             value = [Spatial(**item) for item in value]
             doc[key] = value
         if key == "contactPoint":
@@ -54,9 +52,7 @@ def sync_one_organization(organization_dict):
             for key, value in doc.items():
                 setattr(existing, key, value)
             existing.save()
-            Log(
-                entity="organization", action="update", doc_id=doc_id, value=diff
-            ).save()
+            Log(entity="organization", action="update", doc_id=doc_id, value=diff).save()
     else:
         Organization(**doc).save()
         Log(entity="organization", action="insert", doc_id=doc_id, value=doc).save()

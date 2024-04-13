@@ -2,7 +2,8 @@ from datetime import datetime
 import json
 from flask import Blueprint, Response, request
 
-from src.models.psped import Remit, Diataxi
+from src.models.psped.remit import Remit
+from src.models.psped.diataxi import Diataxi
 from src.models.apografi.organizational_unit import OrganizationalUnit
 
 remit = Blueprint("armodiotites", __name__)

@@ -2,7 +2,7 @@ from calendar import c
 import json
 from datetime import datetime
 from flask import Blueprint, request, Response
-from src.models.psped import NomikiPraxi, FEKDiataxi  
+from src.models.psped.nomiki_praxi import NomikiPraxi, FEKDiataxi
 
 nomikes_praxeis = Blueprint("nomikes_praxeis", __name__)
 
