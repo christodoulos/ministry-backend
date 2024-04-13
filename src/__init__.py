@@ -11,6 +11,7 @@ from src.blueprints.apografi import apografi
 from src.blueprints.psped import psped
 from src.blueprints.stats import stats
 from src.blueprints.cofog import cofog
+from src.blueprints.log import log
 
 from src.blueprints.armodiotites import remit
 from src.blueprints.diataxeis import diataxeis
@@ -78,6 +79,7 @@ app.register_blueprint(apografi, url_prefix="/apografi")
 app.register_blueprint(stats, url_prefix="/apografi/stats")
 app.register_blueprint(psped, url_prefix="/psped")
 app.register_blueprint(cofog, url_prefix="/cofog")
+app.register_blueprint(log, url_prefix="/log")
 
 app.register_blueprint(remit, url_prefix="/remit")
 

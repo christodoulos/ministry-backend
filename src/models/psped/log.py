@@ -26,4 +26,4 @@ class PspedSystemLog(me.Document):
             "update",
         ],
     )
-    data = me.DictField(required=True)
+    data = me.DictField()
