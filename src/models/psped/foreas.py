@@ -1,6 +1,7 @@
 import mongoengine as me
 from src.models.apografi.organization import Organization
 from src.models.apografi.organizational_unit import OrganizationalUnit
+from src.models.psped.change import Change
 
 
 class TreeNode(me.EmbeddedDocument):
@@ -58,6 +59,7 @@ class Foreas(me.Document):
     )
     apografi = me.EmbeddedDocumentField(Apografi, required=True)
     tree = me.EmbeddedDocumentListField(TreeNode)
+    changes = me.EmbeddedDocumentListField(Change, default=[])
 
     def build_tree(self):
         monades = self.apografi.monades

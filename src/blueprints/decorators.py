@@ -7,9 +7,9 @@ import json
 def can_edit(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        current_user = get_jwt_identity()
+        # current_user = get_jwt_identity()
         claims = get_jwt()
-        print(current_user, claims)
+        # print(current_user, claims)
 
         user_roles = claims["roles"]
         type_roles = [x for x in user_roles if x["role"] in ["EDITOR", "ADMIN", "ROOT"]]
