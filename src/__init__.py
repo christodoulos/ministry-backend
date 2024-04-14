@@ -15,7 +15,7 @@ from src.blueprints.log import log
 
 from src.blueprints.armodiotites import remit
 from src.blueprints.diataxeis import diataxeis
-from src.blueprints.nomikes_praxeis import nomikes_praxeis
+from src.blueprints.legalact import legalact
 
 from src.blueprints.upload import upload
 
@@ -88,14 +88,14 @@ app.register_blueprint(upload, url_prefix="/upload")
 
 
 app.register_blueprint(diataxeis, url_prefix="/diataxeis")
-app.register_blueprint(nomikes_praxeis, url_prefix="/nomikes_praxeis")
+app.register_blueprint(legalact, url_prefix="/legalact")
 
 # Swagger configuration
-SWAGGER_URL = "/docs"
-API_URL = "/static/swagger.json"
-swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,
-    API_URL,
-    config={"app_name": "Υπουργείο Εσωτερικών"},
-)
-app.register_blueprint(swaggerui_blueprint)
+# SWAGGER_URL = "/docs"
+# API_URL = "/static/swagger.json"
+# swaggerui_blueprint = get_swaggerui_blueprint(
+#     SWAGGER_URL,
+#     API_URL,
+#     config={"app_name": "Υπουργείο Εσωτερικών"},
+# )
+# app.register_blueprint(swaggerui_blueprint)

@@ -1,24 +1,21 @@
+import json
+from bson import ObjectId
 import mongoengine as me
 from src.models.upload import FileUpload
+from src.models.psped.change import Change
 from datetime import datetime
 
 
-class FEKdate(me.EmbeddedDocument):
-    day = me.IntField(required=True)
-    month = me.IntField(required=True)
-    year = me.IntField(required=True)
-
-
-class FEKDiataxi(me.EmbeddedDocument):
-    FEKnumber = me.StringField(required=True)
-    FEKissue = me.StringField(required=True)
-    FEKdate = me.EmbeddedDocumentField(FEKdate)
+class FEK(me.EmbeddedDocument):
+    number = me.StringField(default="ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ")
+    issue = me.StringField(choices=["", "Α", "Β", "Υ.Ο.Δ.Δ"])
+    date = me.StringField()
 
 
 class NomikiPraxi(me.Document):
-    meta = {"collection": "nomikes_praxeis", "db_alias": "psped"}
+    meta = {"collection": "nomikes_praxeis", "db_alias": "psped", "indexes": ["legalActKey"]}
 
-    legalActCode = me.StringField(required=True, unique=True)
+    legalActKey = me.StringField(unique=True)
     legalActType = me.StringField(
         required=True,
         choices=[
@@ -31,23 +28,35 @@ class NomikiPraxi(me.Document):
     )
     legalActTypeOther = me.StringField()
     legalActNumber = me.StringField(required=True)
-    legalActDate = me.DateField(required=True)
-    FEKref = me.EmbeddedDocumentField(FEKDiataxi)
-    DiavgeiaNumber = me.StringField()
-    legalActFile = me.ReferenceField(FileUpload)
-    userCode = me.StringField(required=True)
-    creationDate = me.DateTimeField(default=datetime.now())
-    updateDate = me.DateTimeField()
+    legalActYear = me.StringField(required=True)
+    fek = me.EmbeddedDocumentField(FEK)
+    ada = me.StringField(default="ΜΗ ΑΝΑΡΤΗΤΕΑ ΠΡΑΞΗ")
+    legalActFile = me.ReferenceField(FileUpload, required=True)
+    changes = me.EmbeddedDocumentListField(Change, default=[])
 
-    @classmethod
-    def generate_nomiki_praxi_code(cls):
-        last_code = cls.objects.order_by("-legalActCode").first()
-        if last_code:
-            last_number = int(last_code.legalActCode[1:])
-            new_number = last_number + 1
+    def to_json(self):
+        data = self.to_mongo()
+        data["legalActFile"] = str(self.legalActFile.id)
+        return json.dumps(data)
+
+    @property
+    def fek_info(self):
+        print(self.fek.number)
+        if self.fek.number == "ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ":
+            print("AAAAAAAAAAA")
+            return "ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ"
         else:
-            new_number = 1
-        return f"L{new_number:08d}"
+            print("BBBBBBBBBBB")
+            fek_date = datetime.strptime(self.fek.date, "%Y-%m-%d")
+            return f"{self.fek.number}/{self.fek.issue}/{fek_date.strftime('%d-%m-%Y')}"
+
+    @property
+    def legalActTypeGeneral(self):
+        return self.legalActType if self.legalActType != "ΑΛΛΟ" else self.legalActTypeOther
+
+    @property
+    def fek_filename(self):
+        return f"{self.legalActTypeGeneral} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
 
     def save(self, *args, **kwargs):
         if self.legalActType == "ΑΛΛΟ":
@@ -63,4 +72,19 @@ class NomikiPraxi(me.Document):
                 raise ValueError(
                     "Ο τύπος πράξης δεν μπορεί να είναι κάποια από τις τιμές 'ΝΟΜΟΣ', 'ΠΡΟΕΔΡΙΚΟ ΔΙΑΤΑΓΜΑ', 'ΚΑΝΟΝΙΣΤΙΚΗ ΔΙΟΙΚΗΤΙΚΗ ΠΡΑΞΗ', 'ΑΠΟΦΑΣΗ ΤΟΥ ΟΡΓΑΝΟΥ ΔΙΟΙΚΗΣΗΣ', 'ΑΛΛΟ'"
                 )
+            legalActKey = f"{self.legalActTypeOther}-{self.legalActNumber}-{self.fek_info}"
+        else:
+            legalActKey = f"{self.legalActType}-{self.legalActNumber}-{self.fek_info}"
+
+        existingDoc = NomikiPraxi.objects(legalActKey=legalActKey).first()
+        if existingDoc:
+            raise ValueError(f"Υπάρχει ήδη νομική πράξη με κλειδί {legalActKey}")
+
+        self.legalActKey = legalActKey
+
+        file = FileUpload.objects.get(id=ObjectId(self.legalActFile.id))
+        if not file:
+            raise ValueError(f"Δεν βρέθηκε αρχείο με id {self.legalActFile.file_id}")
+        file.update(file_name=self.fek_filename)
+
         super(NomikiPraxi, self).save(*args, **kwargs)

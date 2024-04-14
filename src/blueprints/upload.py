@@ -40,7 +40,8 @@ def upload_file():
         )
         file_upload.save()
 
-        return Response(json.dumps({"file_id": file_id}), status=200)
+        # return Response(json.dumps({"file_id": file_id}), status=200)
+        return Response(json.dumps({"id": str(file_upload.id)}), status=200)
 
     return Response(json.dumps({"msg": "File not uploaded"}), status=400)
 
@@ -73,3 +74,15 @@ def uploaded_file(filename_uuid):
         as_attachment=True,
         download_name=original_filename,
     )
+
+
+@upload.route("<filename_uuid>", methods=["PATCH"])
+def update_file(filename_uuid):
+    file = FileUpload.objects(file_id=filename_uuid).first()
+    if file is None:
+        return Response("File not found", status=404)
+
+    data = request.get_json()  # expect data["file_name"]
+    file.update(**data)
+
+    return Response(json.dumps(file.to_mongo().to_dict()), status=200)

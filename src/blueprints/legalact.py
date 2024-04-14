@@ -1,29 +1,33 @@
-from calendar import c
-import json
-from datetime import datetime
 from flask import Blueprint, request, Response
-from src.models.psped.nomiki_praxi import NomikiPraxi, FEKDiataxi
+from src.models.psped.nomiki_praxi import NomikiPraxi, FEK
+from src.models.upload import FileUpload
+from datetime import datetime
+import json
+from bson import ObjectId
 
-nomikes_praxeis = Blueprint("nomikes_praxeis", __name__)
+legalact = Blueprint("legalact", __name__)
 
 
-@nomikes_praxeis.route("/nomikes_praxeis", methods=["POST"])
-def create_nomiki_praxi():
+@legalact.route("", methods=["POST"])
+def create_legalact():
     try:
         data = request.get_json()
-        data["legalActCode"] = NomikiPraxi.generate_nomiki_praxi_code()  # Assumes auto-generation logic
-        nomiki_praxi = NomikiPraxi(**data)
-        nomiki_praxi.save()
-        return Response(nomiki_praxi.to_json(), mimetype="application/json", status=201)
-    except Exception as e:
+        legalActFile = FileUpload.objects.get(id=ObjectId(data["legalActFile"]))
+        del data["legalActFile"]
+        NomikiPraxi(**data, legalActFile=legalActFile).save()
         return Response(
-            json.dumps({"error": f"Αποτυχία δημιουργίας νομικής πράξης: {e}"}),
+            json.dumps({"msg": "Επιτυχής δημιουργία νομικής πράξης"}), mimetype="application/json", status=201
+        )
+    except Exception as e:
+        print(e)
+        return Response(
+            json.dumps({"msg": f"Αποτυχία δημιουργίας νομικής πράξης: {e}"}),
             mimetype="application/json",
             status=500,
         )
 
 
-@nomikes_praxeis.route("/nomikes_praxeis/<string:code>", methods=["GET"])
+@legalact.route("/nomikes_praxeis/<string:code>", methods=["GET"])
 def get_nomiki_praxi(code):
     try:
         nomiki_praxi = NomikiPraxi.objects.get(legalActCode=code)
@@ -36,13 +40,13 @@ def get_nomiki_praxi(code):
         )
 
 
-@nomikes_praxeis.route("/nomikes_praxeis/", methods=["GET"])
+@legalact.route("/nomikes_praxeis/", methods=["GET"])
 def list_all_nomikes_praxeis():
     nomikes_praxeis = NomikiPraxi.objects()
     return Response(nomikes_praxeis.to_json(), mimetype="application/json", status=200)
 
 
-@nomikes_praxeis.route("/nomikes_praxeis/<string:code>", methods=["PUT"])
+@legalact.route("/nomikes_praxeis/<string:code>", methods=["PUT"])
 def update_nomiki_praxi(code):
     data = request.get_json()
 
@@ -66,8 +70,8 @@ def update_nomiki_praxi(code):
     try:
         for key, value in data.items():
             if hasattr(nomiki_praxi, key):
-                if key == "FEKref":
-                    fek = FEKDiataxi(**value)
+                if key == "fek":
+                    fek = FEK(**value)
                     setattr(nomiki_praxi, key, fek)
                 else:
                     setattr(nomiki_praxi, key, value)
@@ -83,7 +87,7 @@ def update_nomiki_praxi(code):
         )
 
 
-# @nomikes_praxeis.route("/nomikes_praxeis/<string:code>", methods=["DELETE"])
+# @legalact.route("/nomikes_praxeis/<string:code>", methods=["DELETE"])
 # def delete_nomiki_praxi(code):
 #     try:
 #         nomiki_praxi = NomikiPraxi.objects.get(legalActCode=code)
