@@ -27,6 +27,12 @@ def create_legalact():
         )
 
 
+@legalact.route("", methods=["GET"])
+def list_all_nomikes_praxeis():
+    nomikes_praxeis = NomikiPraxi.objects()
+    return Response(nomikes_praxeis.to_json(), mimetype="application/json", status=200)
+
+
 @legalact.route("/nomikes_praxeis/<string:code>", methods=["GET"])
 def get_nomiki_praxi(code):
     try:
@@ -38,12 +44,6 @@ def get_nomiki_praxi(code):
             mimetype="application/json",
             status=404,
         )
-
-
-@legalact.route("/nomikes_praxeis/", methods=["GET"])
-def list_all_nomikes_praxeis():
-    nomikes_praxeis = NomikiPraxi.objects()
-    return Response(nomikes_praxeis.to_json(), mimetype="application/json", status=200)
 
 
 @legalact.route("/nomikes_praxeis/<string:code>", methods=["PUT"])

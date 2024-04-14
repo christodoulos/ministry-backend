@@ -5,6 +5,7 @@ import os
 import uuid
 from src.models.upload import FileUpload
 from src.config import ALLOWED_EXTENSIONS
+from bson import ObjectId
 
 upload = Blueprint("upload", __name__)
 
@@ -58,15 +59,16 @@ def get_file():
     )
 
 
-@upload.route("<filename_uuid>", methods=["GET"])
-# @jwt_required()
-def uploaded_file(filename_uuid):
-    file_upload = FileUpload.objects(file_id=filename_uuid).first()
+@upload.route("<docid>", methods=["GET"])
+@jwt_required()
+def uploaded_file(docid):
+    file_upload = FileUpload.objects(id=ObjectId(docid)).first()
     if file_upload is None:
         return Response("File not found", status=404)
 
     original_filename = file_upload.file_name
     file_location = file_upload.file_location
+    filename_uuid = file_upload.file_id
 
     return send_from_directory(
         file_location,
@@ -76,13 +78,13 @@ def uploaded_file(filename_uuid):
     )
 
 
-@upload.route("<filename_uuid>", methods=["PATCH"])
-def update_file(filename_uuid):
-    file = FileUpload.objects(file_id=filename_uuid).first()
-    if file is None:
-        return Response("File not found", status=404)
+# @upload.route("<filename_uuid>", methods=["PATCH"])
+# def update_file(filename_uuid):
+#     file = FileUpload.objects(file_id=filename_uuid).first()
+#     if file is None:
+#         return Response("File not found", status=404)
 
-    data = request.get_json()  # expect data["file_name"]
-    file.update(**data)
+#     data = request.get_json()  # expect data["file_name"]
+#     file.update(**data)
 
-    return Response(json.dumps(file.to_mongo().to_dict()), status=200)
+#     return Response(json.dumps(file.to_mongo().to_dict()), status=200)
