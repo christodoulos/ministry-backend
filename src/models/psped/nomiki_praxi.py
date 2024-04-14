@@ -41,12 +41,9 @@ class NomikiPraxi(me.Document):
 
     @property
     def fek_info(self):
-        print(self.fek.number)
         if self.fek.number == "ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ":
-            print("AAAAAAAAAAA")
             return "ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ"
         else:
-            print("BBBBBBBBBBB")
             fek_date = datetime.strptime(self.fek.date, "%Y-%m-%d")
             return f"{self.fek.number}/{self.fek.issue}/{fek_date.strftime('%d-%m-%Y')}"
 
