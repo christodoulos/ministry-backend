@@ -8,7 +8,7 @@ from datetime import datetime
 
 class FEK(me.EmbeddedDocument):
     number = me.StringField(default="ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ")
-    issue = me.StringField(choices=["", "Α", "Β", "Υ.Ο.Δ.Δ"])
+    issue = me.StringField(choices=["", "Α", "Β", "Υ.Ο.Δ.Δ."])
     date = me.StringField()
 
 
@@ -69,9 +69,9 @@ class NomikiPraxi(me.Document):
                 raise ValueError(
                     "Ο τύπος πράξης δεν μπορεί να είναι κάποια από τις τιμές 'ΝΟΜΟΣ', 'ΠΡΟΕΔΡΙΚΟ ΔΙΑΤΑΓΜΑ', 'ΚΑΝΟΝΙΣΤΙΚΗ ΔΙΟΙΚΗΤΙΚΗ ΠΡΑΞΗ', 'ΑΠΟΦΑΣΗ ΤΟΥ ΟΡΓΑΝΟΥ ΔΙΟΙΚΗΣΗΣ', 'ΑΛΛΟ'"
                 )
-            legalActKey = f"{self.legalActTypeOther}-{self.legalActNumber}-{self.fek_info}"
+            legalActKey = f"{self.legalActTypeOther} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
         else:
-            legalActKey = f"{self.legalActType}-{self.legalActNumber}-{self.fek_info}"
+            legalActKey = f"{self.legalActType} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
 
         existingDoc = NomikiPraxi.objects(legalActKey=legalActKey).first()
         if existingDoc:
