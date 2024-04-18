@@ -1,14 +1,14 @@
 from flask import Blueprint, request, Response
-from src.models.psped.nomiki_praxi import NomikiPraxi, FEK
+from src.models.psped.legal_act import NomikiPraxi, FEK
 from src.models.upload import FileUpload
 from datetime import datetime
 import json
 from bson import ObjectId
 
-legalact = Blueprint("legalact", __name__)
+legal_act = Blueprint("legal_act", __name__)
 
 
-@legalact.route("", methods=["POST"])
+@legal_act.route("", methods=["POST"])
 def create_legalact():
     try:
         data = request.get_json()
@@ -27,13 +27,13 @@ def create_legalact():
         )
 
 
-@legalact.route("", methods=["GET"])
+@legal_act.route("", methods=["GET"])
 def list_all_nomikes_praxeis():
     nomikes_praxeis = NomikiPraxi.objects()
     return Response(nomikes_praxeis.to_json(), mimetype="application/json", status=200)
 
 
-@legalact.route("/nomikes_praxeis/<string:code>", methods=["GET"])
+@legal_act.route("/nomikes_praxeis/<string:code>", methods=["GET"])
 def get_nomiki_praxi(code):
     try:
         nomiki_praxi = NomikiPraxi.objects.get(legalActCode=code)
@@ -46,7 +46,7 @@ def get_nomiki_praxi(code):
         )
 
 
-@legalact.route("/nomikes_praxeis/<string:code>", methods=["PUT"])
+@legal_act.route("/nomikes_praxeis/<string:code>", methods=["PUT"])
 def update_nomiki_praxi(code):
     data = request.get_json()
 
@@ -85,24 +85,3 @@ def update_nomiki_praxi(code):
             mimetype="application/json",
             status=500,
         )
-
-
-# @legalact.route("/nomikes_praxeis/<string:code>", methods=["DELETE"])
-# def delete_nomiki_praxi(code):
-#     try:
-#         nomiki_praxi = NomikiPraxi.objects.get(legalActCode=code)
-
-#         nomiki_praxi.delete()
-#         return Response(
-#             json.dumps(
-#                 {"success": f"Η νομική πράξη με κωδικό {code} διαγράφηκε"}),
-#             mimetype="application/json",
-#             status=204,
-#         )
-#     except NomikiPraxi.DoesNotExist:
-#         return Response(
-#             json.dumps({"error":
-#                         f"Νομική πράξη με κωδικό {code} δεν βρέθηκε"}),
-#             mimetype="application/json",
-#             status=404,
-#         )

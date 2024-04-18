@@ -13,7 +13,11 @@ class FEK(me.EmbeddedDocument):
 
 
 class NomikiPraxi(me.Document):
-    meta = {"collection": "nomikes_praxeis", "db_alias": "psped", "indexes": ["legalActKey"]}
+    meta = {
+        "collection": "nomikes_praxeis",
+        "db_alias": "psped",
+        "indexes": [{"fields": ["legalActKey"], "unique": True}],
+    }
 
     legalActKey = me.StringField(unique=True)
     legalActType = me.StringField(

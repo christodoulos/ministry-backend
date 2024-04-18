@@ -5,6 +5,7 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 from mongoengine import connect
+from datetime import timedelta
 
 from src.blueprints.auth import auth
 from src.blueprints.apografi import apografi
@@ -14,8 +15,8 @@ from src.blueprints.cofog import cofog
 from src.blueprints.log import log
 
 from src.blueprints.armodiotites import remit
-from src.blueprints.diataxeis import diataxeis
-from src.blueprints.legalact import legalact
+from src.blueprints.legal_provision import legal_provision
+from src.blueprints.legal_act import legal_act
 
 from src.blueprints.upload import upload
 
@@ -37,7 +38,7 @@ app = Flask(__name__)
 
 jwt = JWTManager(app)
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 3600
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
@@ -87,8 +88,8 @@ app.register_blueprint(remit, url_prefix="/remit")
 app.register_blueprint(upload, url_prefix="/upload")
 
 
-app.register_blueprint(diataxeis, url_prefix="/diataxeis")
-app.register_blueprint(legalact, url_prefix="/legalact")
+app.register_blueprint(legal_provision, url_prefix="/legal_provision")
+app.register_blueprint(legal_act, url_prefix="/legal_act")
 
 # Swagger configuration
 # SWAGGER_URL = "/docs"

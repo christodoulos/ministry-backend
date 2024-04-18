@@ -3,7 +3,7 @@ import json
 from flask import Blueprint, Response, request
 
 from src.models.psped.remit import Remit
-from src.models.psped.diataxi import Diataxi
+from src.models.psped.legal_provision import LegalProvision
 from src.models.apografi.organizational_unit import OrganizationalUnit
 
 remit = Blueprint("armodiotites", __name__)
@@ -26,8 +26,8 @@ def create_remit():
         # check if diataxeis codes exists
         for diataxi_code in data["diataxisCodes"]:
             try:
-                diataxi = Diataxi.objects.get(legalProvisionCode=diataxi_code)
-            except Diataxi.DoesNotExist:
+                diataxi = LegalProvision.objects.get(legalProvisionCode=diataxi_code)
+            except LegalProvision.DoesNotExist:
                 return Response(
                     json.dumps({"error": f"Δεν βρέθηκε νομική διάταξη με κωδικό {diataxi_code}"}),
                     mimetype="application/json",
@@ -115,8 +115,8 @@ def update_remit(remitCode: str):
     if diataxis_codes:
         for code in diataxis_codes:
             try:
-                diataxi = Diataxi.objects.get(legalProvisionCode=code)
-            except Diataxi.DoesNotExist:
+                diataxi = LegalProvision.objects.get(legalProvisionCode=code)
+            except LegalProvision.DoesNotExist:
                 return Response(
                     json.dumps({"error": f"Δεν βρέθηκε νομική διάταξη με κωδικό {code}"}),
                     mimetype="application/json",
