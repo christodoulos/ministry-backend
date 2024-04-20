@@ -2,7 +2,6 @@ import json
 from bson import ObjectId
 import mongoengine as me
 from src.models.upload import FileUpload
-from src.models.psped.change import Change
 from datetime import datetime
 
 
@@ -12,9 +11,9 @@ class FEK(me.EmbeddedDocument):
     date = me.StringField()
 
 
-class NomikiPraxi(me.Document):
+class LegalAct(me.Document):
     meta = {
-        "collection": "nomikes_praxeis",
+        "collection": "legal_acts",
         "db_alias": "psped",
         "indexes": [{"fields": ["legalActKey"], "unique": True}],
     }
@@ -36,7 +35,6 @@ class NomikiPraxi(me.Document):
     fek = me.EmbeddedDocumentField(FEK)
     ada = me.StringField(default="ΜΗ ΑΝΑΡΤΗΤΕΑ ΠΡΑΞΗ")
     legalActFile = me.ReferenceField(FileUpload, required=True)
-    changes = me.EmbeddedDocumentListField(Change, default=[])
 
     def to_json(self):
         data = self.to_mongo()
@@ -77,7 +75,7 @@ class NomikiPraxi(me.Document):
         else:
             legalActKey = f"{self.legalActType} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
 
-        existingDoc = NomikiPraxi.objects(legalActKey=legalActKey).first()
+        existingDoc = LegalAct.objects(legalActKey=legalActKey).first()
         if existingDoc:
             raise ValueError(f"Υπάρχει ήδη νομική πράξη με κλειδί {legalActKey}")
 
@@ -88,4 +86,4 @@ class NomikiPraxi(me.Document):
             raise ValueError(f"Δεν βρέθηκε αρχείο με id {self.legalActFile.file_id}")
         file.update(file_name=self.fek_filename)
 
-        super(NomikiPraxi, self).save(*args, **kwargs)
+        super(LegalAct, self).save(*args, **kwargs)

@@ -59,7 +59,6 @@ class Foreas(me.Document):
     )
     apografi = me.EmbeddedDocumentField(Apografi, required=True)
     tree = me.EmbeddedDocumentListField(TreeNode)
-    changes = me.EmbeddedDocumentListField(Change, default=[])
 
     def build_tree(self):
         monades = self.apografi.monades

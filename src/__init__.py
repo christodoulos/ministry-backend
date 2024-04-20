@@ -14,7 +14,7 @@ from src.blueprints.stats import stats
 from src.blueprints.cofog import cofog
 from src.blueprints.log import log
 
-from src.blueprints.armodiotites import remit
+from src.blueprints.remits import remit
 from src.blueprints.legal_provision import legal_provision
 from src.blueprints.legal_act import legal_act
 

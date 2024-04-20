@@ -32,7 +32,8 @@ def get_foreas(code: str):
 @jwt_required()
 @can_edit
 def update_poliepipedi(code: str):
-    current_user = get_jwt_identity()
+    who = get_jwt_identity()
+    what = "organization"
 
     try:
         data = request.get_json()
@@ -51,8 +52,8 @@ def update_poliepipedi(code: str):
         diff = DeepDiff(foreas.to_mongo().to_dict(), foreas_updated)
 
         if diff:
-            change = Change(action="update", who=current_user, change=diff)
-            foreas.update(**data, changes=foreas.changes + [change])
+            foreas.update(**data)
+            Change(action="update", who=who, what=what, change=diff).save()
             return Response(
                 json.dumps(foreas.to_json()),
                 mimetype="application/json",

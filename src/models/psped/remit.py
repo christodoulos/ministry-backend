@@ -1,5 +1,11 @@
 import mongoengine as me
-from datetime import datetime
+from src.models.psped.legal_provision import RegulatedObjectCode
+
+
+class COFOG(me.EmbeddedDocument):
+    cofog1 = me.StringField(required=True)
+    cofog2 = me.StringField(required=True)
+    cofog3 = me.StringField(required=True)
 
 
 class Remit(me.Document):
@@ -17,27 +23,7 @@ class Remit(me.Document):
             "ΠΑΡΑΚΟΛΟΥΘΗΣΗΣ ΑΠΟΤΕΛΕΣΜΑΤΙΚΗΣ ΠΟΛΙΤΙΚΗΣ ΚΑΙ ΑΞΙΟΛΟΓΗΣΗΣ ΑΠΟΤΕΛΕΣΜΑΤΩΝ",
         ],
     )
-    unitCode = me.StringField(required=True)
-    COFOG_1stLevel = me.StringField(required=True)
-    COFOG_2ndLevel = me.StringField(required=True)
-    thematic_3rdLevel = me.StringField(required=True)
-    status = me.StringField(required=True, choices=["ΕΝΕΡΓΗ", "ΑΝΕΝΕΡΓΗ"])
+    cofog = me.EmbeddedDocumentField(COFOG, required=True)
+    status = me.StringField(choices=["ΕΝΕΡΓΗ", "ΑΝΕΝΕΡΓΗ"], default="ΕΝΕΡΓΗ")
+    regularedObject = me.EmbeddedDocumentField(RegulatedObjectCode, required=True)
     diataxisCodes = me.ListField(me.StringField(), required=True)
-    creationDate = me.DateField(default=datetime.now)
-    userCode = me.StringField(required=True)
-    updateDate = me.DateField()
-
-    @classmethod
-    def generate_remit_code(cls):
-        # Attempt to find the highest current remit code and increment it
-        last_remit = cls.objects.order_by("-remitCode").first()
-        if last_remit:
-            last_number = int(last_remit.remitCode[1:])  # Exclude the first character ('A') and convert to int
-            new_number = last_number + 1
-        else:
-            new_number = 1  # Start from 1 if no remits exist
-        return f"A{new_number:08d}"
-
-    def save(self, *args, **kwargs):
-        self.updateDate = datetime.now()
-        return super(Remit, self).save(*args, **kwargs)

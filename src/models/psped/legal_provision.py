@@ -1,5 +1,5 @@
 import mongoengine as me
-from src.models.psped.change import Change
+from src.models.psped.legal_act import LegalAct
 
 
 class RegulatedObjectCode(me.EmbeddedDocument):
@@ -13,7 +13,7 @@ class Abolition(me.EmbeddedDocument):
     userCode = me.StringField(required=True)
 
 
-class LegalProvisionFields(me.EmbeddedDocument):
+class LegalProvisionSpecs(me.EmbeddedDocument):
     meros = me.StringField()
     arthro = me.StringField()
     paragrafos = me.StringField()
@@ -21,21 +21,21 @@ class LegalProvisionFields(me.EmbeddedDocument):
     pararthma = me.StringField()
 
     def validate(self, clean=True):
-        super(LegalProvisionFields, self).validate(clean)
+        super(LegalProvisionSpecs, self).validate(clean)
         fields = [self.meros, self.arthro, self.paragrafos, self.edafio, self.pararthma]
         if not any(fields):
-            raise me.ValidationError("LegalProvisionFields must have at least one field filled")
+            raise me.ValidationError("LegalProvisionSpecs must have at least one field filled")
 
 
 class LegalProvision(me.Document):
     meta = {
-        "collection": "diataxeis",
+        "collection": "legal_provisions",
         "db_alias": "psped",
-        "indexes": [{"fields": ["regulatedObject", "legalAct", "legalProvision"], "unique": True}],
+        "indexes": [{"fields": ["regulatedObject", "legalActKey", "legalProvisionSpecs"], "unique": True}],
     }
 
     regulatedObject = me.EmbeddedDocumentField(RegulatedObjectCode, required=True)
-    legalAct = me.StringField(required=True)
-    legalProvision = me.EmbeddedDocumentField(LegalProvisionFields, required=True)
-    changes = me.EmbeddedDocumentListField(Change, default=[])
+    legalActKey = me.StringField(required=True)
+    legalActRef = me.ReferenceField(LegalAct, required=True)
+    legalProvisionSpecs = me.EmbeddedDocumentField(LegalProvisionSpecs, required=True)
     abolition = me.EmbeddedDocumentField(Abolition)

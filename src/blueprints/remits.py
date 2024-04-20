@@ -6,7 +6,7 @@ from src.models.psped.remit import Remit
 from src.models.psped.legal_provision import LegalProvision
 from src.models.apografi.organizational_unit import OrganizationalUnit
 
-remit = Blueprint("armodiotites", __name__)
+remit = Blueprint("remits", __name__)
 
 
 @remit.route("/remit", methods=["POST"])

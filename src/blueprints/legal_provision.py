@@ -1,5 +1,8 @@
 from flask import Blueprint, request, Response
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from src.models.psped.legal_provision import LegalProvision
+from src.models.psped.legal_act import LegalAct
+from src.models.psped.change import Change
 import json
 
 
@@ -7,18 +10,23 @@ legal_provision = Blueprint("legal_provision", __name__)
 
 
 @legal_provision.route("", methods=["POST"])
+@jwt_required()
 def create_legal_provision():
+    who = get_jwt_identity()
+    what = "legalProvision"
     try:
         data = request.get_json()
         print(data)
+        legalActRef = LegalAct.objects.get(legalActKey=data["legalActKey"])
 
-        legal_provision = LegalProvision(**data)
+        legal_provision = LegalProvision(**data, legalActRef=legalActRef)
         legal_provision.save()
         index = {
             "regulatedObject": legal_provision.regulatedObject.to_mongo().to_dict(),
-            "legalAct": legal_provision.legalAct,
-            "legalProvision": legal_provision.legalProvision.to_mongo().to_dict(),
+            "legalActKey": legal_provision.legalActKey,
+            "legalProvisionSpecs": legal_provision.legalProvisionSpecs.to_mongo().to_dict(),
         }
+        Change(action="create", who=who, what=what, change=legal_provision.to_mongo()).save()
 
         return Response(
             json.dumps({"msg": "Επιτυχής δημιουργία διάταξης", "index": index}), mimetype="application/json", status=201
