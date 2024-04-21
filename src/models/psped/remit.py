@@ -1,5 +1,9 @@
 import mongoengine as me
-from src.models.psped.legal_provision import RegulatedObjectCode
+
+
+class RegulatedObjectCode(me.EmbeddedDocument):
+    foreas = me.StringField(required=True)
+    monada = me.StringField(required=True)
 
 
 class COFOG(me.EmbeddedDocument):

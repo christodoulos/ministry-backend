@@ -22,7 +22,6 @@ def create_legal_provision():
         legal_provision = LegalProvision(**data, legalActRef=legalActRef)
         legal_provision.save()
         index = {
-            "regulatedObject": legal_provision.regulatedObject.to_mongo().to_dict(),
             "legalActKey": legal_provision.legalActKey,
             "legalProvisionSpecs": legal_provision.legalProvisionSpecs.to_mongo().to_dict(),
         }
@@ -38,10 +37,11 @@ def create_legal_provision():
         )
 
 
-# @diataxi.route("/diataxeis/", methods=["GET"])
-# def list_all_diataxi():
-#     diataxeis = Diataxi.objects()
-#     return Response(diataxeis.to_json(), mimetype="application/json", status=200)
+@legal_provision.route("", methods=["GET"])
+@jwt_required()
+def list_all_legal_provisions():
+    legal_provisions = LegalProvision.objects()
+    return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
 
 
 # @diataxi.route("/diataxeis/<string:code>", methods=["GET"])

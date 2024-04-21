@@ -2,11 +2,6 @@ import mongoengine as me
 from src.models.psped.legal_act import LegalAct
 
 
-class RegulatedObjectCode(me.EmbeddedDocument):
-    foreas = me.StringField(required=True)
-    monada = me.StringField(required=True)
-
-
 class Abolition(me.EmbeddedDocument):
     abolishingLegalProvisionCode = me.StringField(required=True)
     entryDate = me.DateTimeField(required=True)
@@ -31,10 +26,9 @@ class LegalProvision(me.Document):
     meta = {
         "collection": "legal_provisions",
         "db_alias": "psped",
-        "indexes": [{"fields": ["regulatedObject", "legalActKey", "legalProvisionSpecs"], "unique": True}],
+        "indexes": [{"fields": ["legalActKey", "legalProvisionSpecs"], "unique": True}],
     }
 
-    regulatedObject = me.EmbeddedDocumentField(RegulatedObjectCode, required=True)
     legalActKey = me.StringField(required=True)
     legalActRef = me.ReferenceField(LegalAct, required=True)
     legalProvisionSpecs = me.EmbeddedDocumentField(LegalProvisionSpecs, required=True)
