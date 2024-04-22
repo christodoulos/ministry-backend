@@ -39,6 +39,16 @@ def create_remit():
         )
 
 
+@remit.route("", methods=["GET"])
+def retrieve_all_remit():
+    remits = Remit.objects()
+    return Response(
+        remits.to_json(),
+        mimetype="application/json",
+        status=200,
+    )
+
+
 # @remit.route("/remit", methods=["POST"])
 # def create_remit():
 #     try:
