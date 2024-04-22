@@ -1,9 +1,11 @@
 import mongoengine as me
+from src.config import MONGO_PSPED_DB
+from src.models.psped.legal_provision import LegalProvision
 
 
 class RegulatedObjectCode(me.EmbeddedDocument):
-    foreas = me.StringField(required=True)
-    monada = me.StringField(required=True)
+    organization = me.StringField(required=True)
+    organizationalUnit = me.StringField(required=True)
 
 
 class COFOG(me.EmbeddedDocument):
@@ -13,9 +15,9 @@ class COFOG(me.EmbeddedDocument):
 
 
 class Remit(me.Document):
-    meta = {"collection": "remits", "db_alias": "psped"}
+    meta = {"collection": "remits", "db_alias": MONGO_PSPED_DB}
 
-    remitCode = me.StringField(required=True, unique=True)
+    regulatedObject = me.EmbeddedDocumentField(RegulatedObjectCode, required=True)
     remitText = me.StringField(required=True)
     remitType = me.StringField(
         required=True,
@@ -29,5 +31,4 @@ class Remit(me.Document):
     )
     cofog = me.EmbeddedDocumentField(COFOG, required=True)
     status = me.StringField(choices=["ΕΝΕΡΓΗ", "ΑΝΕΝΕΡΓΗ"], default="ΕΝΕΡΓΗ")
-    regularedObject = me.EmbeddedDocumentField(RegulatedObjectCode, required=True)
-    diataxisCodes = me.ListField(me.StringField(), required=True)
+    legalProvisionRefs = me.ListField(me.ReferenceField(LegalProvision), required=True)

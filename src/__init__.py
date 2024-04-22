@@ -14,7 +14,7 @@ from src.blueprints.stats import stats
 from src.blueprints.cofog import cofog
 from src.blueprints.log import log
 
-from src.blueprints.remits import remit
+from src.blueprints.remit import remit
 from src.blueprints.legal_provision import legal_provision
 from src.blueprints.legal_act import legal_act
 
@@ -82,12 +82,8 @@ app.register_blueprint(stats, url_prefix="/apografi/stats")
 app.register_blueprint(psped, url_prefix="/psped")
 app.register_blueprint(cofog, url_prefix="/cofog")
 app.register_blueprint(log, url_prefix="/log")
-
-app.register_blueprint(remit, url_prefix="/remit")
-
 app.register_blueprint(upload, url_prefix="/upload")
-
-
+app.register_blueprint(remit, url_prefix="/remit")
 app.register_blueprint(legal_provision, url_prefix="/legal_provision")
 app.register_blueprint(legal_act, url_prefix="/legal_act")
 

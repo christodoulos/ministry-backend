@@ -16,7 +16,6 @@ def create_legal_provision():
     what = "legalProvision"
     try:
         data = request.get_json()
-        print(data)
         legalActRef = LegalAct.objects.get(legalActKey=data["legalActKey"])
 
         legal_provision = LegalProvision(**data, legalActRef=legalActRef)
