@@ -35,9 +35,17 @@ def create_legalact():
 
 
 @legal_act.route("", methods=["GET"])
+@jwt_required()
 def list_all_nomikes_praxeis():
     nomikes_praxeis = LegalAct.objects()
     return Response(nomikes_praxeis.to_json(), mimetype="application/json", status=200)
+
+
+@legal_act.route("/count", methods=["GET"])
+@jwt_required()
+def count_all_nomikes_praxeis():
+    count = LegalAct.objects().count()
+    return Response(json.dumps({"count": count}), mimetype="application/json", status=200)
 
 
 # @legal_act.route("/nomikes_praxeis/<string:code>", methods=["GET"])

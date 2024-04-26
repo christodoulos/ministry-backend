@@ -43,6 +43,13 @@ def list_all_legal_provisions():
     return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
 
 
+@legal_provision.route("/count", methods=["GET"])
+@jwt_required()
+def count_all_legal_provisions():
+    count = LegalProvision.objects().count()
+    return Response(json.dumps({"count": count}), mimetype="application/json", status=200)
+
+
 # @diataxi.route("/diataxeis/<string:code>", methods=["GET"])
 # def get_diataxi(code: str):
 #     try:

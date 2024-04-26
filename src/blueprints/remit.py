@@ -40,6 +40,7 @@ def create_remit():
 
 
 @remit.route("", methods=["GET"])
+@jwt_required()
 def retrieve_all_remit():
     remits = Remit.objects()
     return Response(
@@ -47,6 +48,13 @@ def retrieve_all_remit():
         mimetype="application/json",
         status=200,
     )
+
+
+@remit.route("/count", methods=["GET"])
+@jwt_required()
+def count_all_remits():
+    count = Remit.objects().count()
+    return Response(json.dumps({"count": count}), mimetype="application/json", status=200)
 
 
 # @remit.route("/remit", methods=["POST"])
