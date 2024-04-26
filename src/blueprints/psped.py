@@ -10,6 +10,16 @@ from src.blueprints.decorators import can_edit
 psped = Blueprint("psped", __name__)
 
 
+@psped.route("/foreas/count")
+def get_foreas_count():
+    count = Foreas.objects.count()
+    return Response(
+        json.dumps({"count": count}),
+        mimetype="application/json",
+        status=200,
+    )
+
+
 @psped.route("/foreas/<string:code>")
 def get_foreas(code: str):
     try:
