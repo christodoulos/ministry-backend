@@ -32,4 +32,5 @@ class LegalProvision(me.Document):
     legalActKey = me.StringField(required=True)
     legalActRef = me.ReferenceField(LegalAct, required=True)
     legalProvisionSpecs = me.EmbeddedDocumentField(LegalProvisionSpecs, required=True)
+    legalProvisionText = me.StringField(required=True)
     abolition = me.EmbeddedDocumentField(Abolition)
