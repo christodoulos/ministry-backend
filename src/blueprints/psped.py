@@ -47,6 +47,7 @@ def update_poliepipedi(code: str):
 
     try:
         data = request.get_json()
+        print(data)
 
         foreas = Foreas.objects.get(code=data["code"])
 

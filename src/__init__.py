@@ -8,6 +8,7 @@ from mongoengine import connect
 from datetime import timedelta
 
 from src.blueprints.auth import auth
+from src.blueprints.user import user
 from src.blueprints.apografi import apografi
 from src.blueprints.psped import psped
 from src.blueprints.stats import stats
@@ -77,6 +78,7 @@ cors = CORS(
 
 # Register blueprints
 app.register_blueprint(auth, url_prefix="/auth")
+app.register_blueprint(user, url_prefix="/user")
 app.register_blueprint(apografi, url_prefix="/apografi")
 app.register_blueprint(stats, url_prefix="/apografi/stats")
 app.register_blueprint(psped, url_prefix="/psped")
