@@ -115,6 +115,16 @@ def get_all_organizational_units():
     )
 
 
+@apografi.route("/organizationalUnit/count")
+def get_organizational_unit_count():
+    data = OrganizationalUnit.objects().count()
+    return Response(
+        json.dumps({"count": data}),
+        mimetype="application/json",
+        status=200,
+    )
+
+
 @apografi.route("/organizationalUnit/<string:code>")
 def get_organizational_unit(code: str):
     try:
