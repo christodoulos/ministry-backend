@@ -1,7 +1,7 @@
 from flask import Blueprint, request, Response
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from src.models.psped.legal_provision import LegalProvision
-from src.models.psped.legal_act import LegalAct
+from src.models.psped.legal_act import LegalAct, FEK
 from src.models.psped.change import Change
 import json
 
@@ -16,9 +16,7 @@ def create_legal_provision():
     what = "legalProvision"
     try:
         data = request.get_json()
-        legalActRef = LegalAct.objects.get(legalActKey=data["legalActKey"])
-
-        legal_provision = LegalProvision(**data, legalActRef=legalActRef)
+        legal_provision = LegalProvision(**data)
         legal_provision.save()
         index = {
             "legalActKey": legal_provision.legalActKey,
@@ -38,8 +36,8 @@ def create_legal_provision():
 
 @legal_provision.route("", methods=["GET"])
 @jwt_required()
-def list_all_legal_provisions():
-    legal_provisions = LegalProvision.objects()
+def get_all_legal_provisions():
+    legal_provisions = LegalProvision.objects().order_by("legalActNumber", "legalActYear")
     return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
 
 

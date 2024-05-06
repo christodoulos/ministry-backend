@@ -1,5 +1,6 @@
+import json
 import mongoengine as me
-from src.models.psped.legal_act import LegalAct
+from src.models.psped.legal_act import LegalAct, FEK
 
 
 class Abolition(me.EmbeddedDocument):
@@ -30,7 +31,23 @@ class LegalProvision(me.Document):
     }
 
     legalActKey = me.StringField(required=True)
-    legalActRef = me.ReferenceField(LegalAct, required=True)
     legalProvisionSpecs = me.EmbeddedDocumentField(LegalProvisionSpecs, required=True)
     legalProvisionText = me.StringField(required=True)
+    legalActType = me.StringField()
+    legalActNumber = me.StringField()
+    legalActTypeOther = me.StringField()
+    legalActYear = me.StringField()
+    ada = me.StringField()
+    fek = me.EmbeddedDocumentField(FEK)
     abolition = me.EmbeddedDocumentField(Abolition)
+
+    def save(self, *args, **kwargs):
+        legalActRef = LegalAct.objects.get(legalActKey=self.legalActKey)
+        self.fek = legalActRef.fek
+        self.legalActType = legalActRef.legalActType
+        self.legalActNumber = legalActRef.legalActNumber
+        self.legalActTypeOther = legalActRef.legalActTypeOther
+        self.legalActNumber = legalActRef.legalActNumber
+        self.legalActYear = legalActRef.legalActYear
+        self.ada = legalActRef.ada
+        super(LegalProvision, self).save(*args, **kwargs)
