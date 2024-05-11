@@ -1,3 +1,4 @@
+from bson import ObjectId
 from flask import Blueprint, request, Response
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from src.models.psped.legal_provision import LegalProvision
@@ -38,6 +39,15 @@ def create_legal_provision():
 @jwt_required()
 def get_all_legal_provisions():
     legal_provisions = LegalProvision.objects().order_by("legalActNumber", "legalActYear")
+    return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
+
+
+@legal_provision.route("/from_list_of_ids", methods=["POST"])
+@jwt_required()
+def get_legal_provisions_from_list_of_ids():
+    data = request.get_json()
+    ids = [ObjectId(id["$oid"]) for id in data]
+    legal_provisions = LegalProvision.objects(id__in=ids)
     return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
 
 

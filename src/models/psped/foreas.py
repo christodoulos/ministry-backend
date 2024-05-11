@@ -2,6 +2,7 @@ import mongoengine as me
 from src.models.apografi.organization import Organization
 from src.models.apografi.organizational_unit import OrganizationalUnit
 from src.models.psped.change import Change
+from src.models.psped.legal_provision import LegalProvision
 
 
 class TreeNode(me.EmbeddedDocument):
@@ -57,8 +58,12 @@ class Foreas(me.Document):
         choices=["ΚΕΝΤΡΙΚΟ", "ΑΠΟΚΕΝΤΡΩΜΕΝΟ", "ΠΕΡΙΦΕΡΕΙΑΚΟ", "ΤΟΠΙΚΟ", "ΜΗ ΟΡΙΣΜΕΝΟ"],
         default="ΜΗ ΟΡΙΣΜΕΝΟ",
     )
+    legalProvisions = me.ListField(me.ReferenceField(LegalProvision))
     apografi = me.EmbeddedDocumentField(Apografi, required=True)
     tree = me.EmbeddedDocumentListField(TreeNode)
+
+    def to_dict(self):
+        return self.to_mongo().to_dict()
 
     def build_tree(self):
         monades = self.apografi.monades

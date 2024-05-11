@@ -3,6 +3,11 @@ import mongoengine as me
 from src.models.psped.legal_act import LegalAct, FEK
 
 
+class RegulatedObject(me.EmbeddedDocument):
+    regulatedObjectType = me.StringField(required=True, choices=["organization", "organizationUnit", "remit"])
+    regulatedObjectCode = me.StringField(required=True)
+
+
 class Abolition(me.EmbeddedDocument):
     abolishingLegalProvisionCode = me.StringField(required=True)
     entryDate = me.DateTimeField(required=True)
@@ -30,6 +35,7 @@ class LegalProvision(me.Document):
         "indexes": [{"fields": ["legalActKey", "legalProvisionSpecs"], "unique": True}],
     }
 
+    regulatedObject = me.EmbeddedDocumentField(RegulatedObject)
     legalActKey = me.StringField(required=True)
     legalProvisionSpecs = me.EmbeddedDocumentField(LegalProvisionSpecs, required=True)
     legalProvisionText = me.StringField(required=True)
