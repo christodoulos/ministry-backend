@@ -18,18 +18,21 @@ def create_legalact():
         legalActFile = FileUpload.objects.get(id=ObjectId(data["legalActFile"]))
         del data["legalActFile"]
         legalAct = LegalAct(**data, legalActFile=legalActFile)
+        legalActKey = legalAct.create_key()
 
-        what = {"entity": "legalAct", "key": {"code": legalAct.create_key()}}
+        what = {"entity": "legalAct", "key": {"code": legalActKey}}
 
         legalAct.save()
         Change(action="create", who=who, what=what, change=legalAct.to_mongo()).save()
         return Response(
-            json.dumps({"msg": "Επιτυχής δημιουργία νομικής πράξης"}), mimetype="application/json", status=201
+            json.dumps({"message": f"Επιτυχής δημιουργία νομικής πράξης <strong>{legalActKey}</strong>"}),
+            mimetype="application/json",
+            status=201,
         )
     except Exception as e:
         print("create_lagalact() ERROR in legal_act.py blueprint", e)
         return Response(
-            json.dumps({"msg": f"Αποτυχία δημιουργίας νομικής πράξης: {e}"}),
+            json.dumps({"message": f"Αποτυχία δημιουργίας νομικής πράξης: {e}"}),
             mimetype="application/json",
             status=500,
         )
