@@ -51,9 +51,10 @@ def update_foreas(code: str):
         data = request.get_json()
 
         level = data["level"]
-        legalProvisionIDs = [ObjectId(id) for id in data["legalProvisions"]]
-        legalProvisions = LegalProvision.objects(id__in=legalProvisionIDs)
-        updates = {"level": level, "legalProvisions": legalProvisions}
+        # legalProvisionIDs = [ObjectId(id) for id in data["legalProvisions"]]
+        # legalProvisions = LegalProvision.objects(id__in=legalProvisionIDs)
+        # updates = {"level": level, "legalProvisions": legalProvisions}
+        updates = {"level": level}
         print(">>>>>>>>>> updates >>", updates)
 
         foreas = Foreas.objects.get(code=code)

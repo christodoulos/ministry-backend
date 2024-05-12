@@ -1,11 +1,10 @@
-import json
 import mongoengine as me
 from src.models.psped.legal_act import LegalAct, FEK
 
 
 class RegulatedObject(me.EmbeddedDocument):
     regulatedObjectType = me.StringField(required=True, choices=["organization", "organizationUnit", "remit"])
-    regulatedObjectCode = me.StringField(required=True)
+    regulatedObjectObjectId = me.StringField(required=True)
 
 
 class Abolition(me.EmbeddedDocument):
@@ -57,3 +56,6 @@ class LegalProvision(me.Document):
         self.legalActYear = legalActRef.legalActYear
         self.ada = legalActRef.ada
         super(LegalProvision, self).save(*args, **kwargs)
+
+    def to_dict(self):
+        return self.to_mongo().to_dict()
