@@ -54,6 +54,7 @@ def update_foreas(code: str):
         legalProvisionIDs = [ObjectId(id) for id in data["legalProvisions"]]
         legalProvisions = LegalProvision.objects(id__in=legalProvisionIDs)
         updates = {"level": level, "legalProvisions": legalProvisions}
+        print(">>>>>>>>>> updates >>", updates)
 
         foreas = Foreas.objects.get(code=code)
 
@@ -67,6 +68,7 @@ def update_foreas(code: str):
         diff = DeepDiff(foreas.to_dict(), foreas_updated.to_dict())
 
         if diff:
+            print(">>>>>>>>>>", diff)
             foreas = Foreas.objects(id=id).first()
             foreas.update(**foreas_dict)
             Change(action="update", who=who, what=what, change=diff).save()

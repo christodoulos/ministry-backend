@@ -57,7 +57,7 @@ class LegalAct(me.Document):
     def fek_filename(self):
         return f"{self.legalActTypeGeneral} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
 
-    def save(self, *args, **kwargs):
+    def create_key(self):
         if self.legalActType == "ΑΛΛΟ":
             if not self.legalActTypeOther:
                 raise ValueError("Ο τύπος πράξης δεν μπορεί να είναι κενός ενώ επιλέξατε 'ΑΛΛΟ'")
@@ -71,9 +71,12 @@ class LegalAct(me.Document):
                 raise ValueError(
                     "Ο τύπος πράξης δεν μπορεί να είναι κάποια από τις τιμές 'ΝΟΜΟΣ', 'ΠΡΟΕΔΡΙΚΟ ΔΙΑΤΑΓΜΑ', 'ΚΑΝΟΝΙΣΤΙΚΗ ΔΙΟΙΚΗΤΙΚΗ ΠΡΑΞΗ', 'ΑΠΟΦΑΣΗ ΤΟΥ ΟΡΓΑΝΟΥ ΔΙΟΙΚΗΣΗΣ', 'ΑΛΛΟ'"
                 )
-            legalActKey = f"{self.legalActTypeOther} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
+            return f"{self.legalActTypeOther} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
         else:
-            legalActKey = f"{self.legalActType} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
+            return f"{self.legalActType} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
+
+    def save(self, *args, **kwargs):
+        legalActKey = self.create_key()
 
         existingDoc = LegalAct.objects(legalActKey=legalActKey).first()
         if existingDoc:

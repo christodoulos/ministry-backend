@@ -1,7 +1,7 @@
 from bson import ObjectId
 from flask import Blueprint, request, Response
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from src.models.psped.legal_provision import LegalProvision
+from src.models.psped.legal_provision import LegalProvision, RegulatedObject
 from src.models.psped.legal_act import LegalAct, FEK
 from src.models.psped.change import Change
 import json
@@ -49,6 +49,28 @@ def get_legal_provisions_from_list_of_ids():
     ids = [ObjectId(id["$oid"]) for id in data]
     legal_provisions = LegalProvision.objects(id__in=ids)
     return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
+
+
+@legal_provision.route("/from_list_of_keys/update_regulated_object", methods=["POST"])
+@jwt_required()
+def update_regulated_object_from_list_of_keys():
+    data = request.get_json()
+    regulated_object = data["regulatedObject"]
+    keys = data["keys"]
+
+    existing_legal_provisions = LegalProvision.objects(regulatedObject=RegulatedObject(**regulated_object))
+    for prov in existing_legal_provisions:
+        prov.regulatedObject = None
+        prov.save()
+
+    for key in keys:
+        legal_provision = LegalProvision.objects.get(
+            legalActKey=key["legalActKey"], legalProvisionSpecs=key["legalProvisionSpecs"]
+        )
+        legal_provision.regulatedObject = RegulatedObject(**regulated_object)
+        legal_provision.save()
+
+    return Response(json.dumps({"msg": "Legal Provisions Updated"}), mimetype="application/json", status=200)
 
 
 @legal_provision.route("/count", methods=["GET"])

@@ -1,9 +1,8 @@
 from flask import Blueprint, request, Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.models.psped.legal_act import LegalAct, FEK
+from src.models.psped.legal_act import LegalAct
 from src.models.psped.change import Change
 from src.models.upload import FileUpload
-from datetime import datetime
 import json
 from bson import ObjectId
 
@@ -14,19 +13,21 @@ legal_act = Blueprint("legal_act", __name__)
 @jwt_required()
 def create_legalact():
     who = get_jwt_identity()
-    what = "legalAct"
     try:
         data = request.get_json()
         legalActFile = FileUpload.objects.get(id=ObjectId(data["legalActFile"]))
         del data["legalActFile"]
         legalAct = LegalAct(**data, legalActFile=legalActFile)
+
+        what = {"entity": "legalAct", "key": {"code": legalAct.create_key()}}
+
         legalAct.save()
         Change(action="create", who=who, what=what, change=legalAct.to_mongo()).save()
         return Response(
             json.dumps({"msg": "Επιτυχής δημιουργία νομικής πράξης"}), mimetype="application/json", status=201
         )
     except Exception as e:
-        print(e)
+        print("create_lagalact() ERROR in legal_act.py blueprint", e)
         return Response(
             json.dumps({"msg": f"Αποτυχία δημιουργίας νομικής πράξης: {e}"}),
             mimetype="application/json",
