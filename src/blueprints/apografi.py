@@ -103,7 +103,7 @@ def get_organization_unit():
 @apografi.route("/organizationalUnit/all")
 def get_all_organizational_units():
     data = (
-        OrganizationalUnit.objects.only("code", "preferredLabel", "unitType", "supervisorUnitCode")
+        OrganizationalUnit.objects.only("code", "preferredLabel", "unitType", "organizationCode", "supervisorUnitCode")
         .exclude("id")
         .order_by("preferredLabel")
     )
