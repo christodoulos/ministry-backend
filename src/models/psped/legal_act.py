@@ -3,10 +3,15 @@ from bson import ObjectId
 import mongoengine as me
 from src.models.upload import FileUpload
 from datetime import datetime
+import uuid
+
+
+def default_ada():
+    return f"ΜΗ ΑΝΑΡΤΗΤΕΑ ΠΡΑΞΗ-{uuid.uuid4()}"
 
 
 class FEK(me.EmbeddedDocument):
-    number = me.StringField(default="ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ")
+    number = me.StringField(default=f"ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ-{uuid.uuid4()}")
     issue = me.StringField(choices=["", "Α", "Β", "Υ.Ο.Δ.Δ."])
     date = me.StringField()
 
@@ -32,8 +37,8 @@ class LegalAct(me.Document):
     legalActTypeOther = me.StringField()
     legalActNumber = me.StringField(required=True)
     legalActYear = me.StringField(required=True)
-    fek = me.EmbeddedDocumentField(FEK)
-    ada = me.StringField(default="ΜΗ ΑΝΑΡΤΗΤΕΑ ΠΡΑΞΗ")
+    fek = me.EmbeddedDocumentField(FEK, unique=True)
+    ada = me.StringField(default=default_ada, unique=True)
     legalActFile = me.ReferenceField(FileUpload, required=True)
 
     def to_json(self):
