@@ -11,7 +11,7 @@ def default_ada():
 
 
 class FEK(me.EmbeddedDocument):
-    number = me.StringField(default=f"ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ-{uuid.uuid4()}")
+    number = me.StringField()
     issue = me.StringField(choices=["", "Α", "Β", "Υ.Ο.Δ.Δ."])
     date = me.StringField()
 
@@ -33,8 +33,9 @@ class LegalAct(me.Document):
             "ΑΠΟΦΑΣΗ ΤΟΥ ΟΡΓΑΝΟΥ ΔΙΟΙΚΗΣΗΣ",
             "ΑΛΛΟ",
         ],
+        unique_with=["legalActTypeOther", "legalActNumber", "legalActYear"],
     )
-    legalActTypeOther = me.StringField()
+    legalActTypeOther = me.StringField(unique_with=["legalActNumber", "legalActYear"])
     legalActNumber = me.StringField(required=True)
     legalActYear = me.StringField(required=True)
     fek = me.EmbeddedDocumentField(FEK, unique=True)
@@ -48,11 +49,15 @@ class LegalAct(me.Document):
 
     @property
     def fek_info(self):
-        if self.fek.number == "ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ":
-            return "ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ"
+        if not self.fek.number or not self.fek.issue or not self.fek.date:
+            fek_number = f"ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ-{uuid.uuid4()}"
+            self.fek.number = fek_number
+            self.fek.issue = ""
+            self.fek.date = ""
+            return fek_number
         else:
             fek_date = datetime.strptime(self.fek.date, "%Y-%m-%d")
-            return f"{self.fek.number}/{self.fek.issue}/{fek_date.strftime('%d-%m-%Y')}"
+            return f"ΦΕΚ {self.fek.number}/{self.fek.issue}/{fek_date.strftime('%d-%m-%Y')}"
 
     @property
     def legalActTypeGeneral(self):
@@ -60,7 +65,14 @@ class LegalAct(me.Document):
 
     @property
     def fek_filename(self):
-        return f"{self.legalActTypeGeneral} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
+        return f"{self.legalActTypeGeneral} {self.legalActNumber}/{self.legalActYear} {self.fek_info}"
+
+    @property
+    def key2str(self):
+        if "ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ" in self.fek_info:
+            return f"{self.legalActTypeGeneral} {self.legalActNumber}/{self.legalActYear} ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ"
+        else:
+            return self.legalActKey
 
     def create_key(self):
         if self.legalActType == "ΑΛΛΟ":
@@ -76,9 +88,9 @@ class LegalAct(me.Document):
                 raise ValueError(
                     "Ο τύπος πράξης δεν μπορεί να είναι κάποια από τις τιμές 'ΝΟΜΟΣ', 'ΠΡΟΕΔΡΙΚΟ ΔΙΑΤΑΓΜΑ', 'ΚΑΝΟΝΙΣΤΙΚΗ ΔΙΟΙΚΗΤΙΚΗ ΠΡΑΞΗ', 'ΑΠΟΦΑΣΗ ΤΟΥ ΟΡΓΑΝΟΥ ΔΙΟΙΚΗΣΗΣ', 'ΑΛΛΟ'"
                 )
-            return f"{self.legalActTypeOther} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
+            return f"{self.legalActTypeOther} {self.legalActNumber}/{self.legalActYear} {self.fek_info}"
         else:
-            return f"{self.legalActType} {self.legalActNumber}/{self.legalActYear} ΦΕΚ {self.fek_info}"
+            return f"{self.legalActType} {self.legalActNumber}/{self.legalActYear} {self.fek_info}"
 
     def save(self, *args, **kwargs):
         legalActKey = self.create_key()

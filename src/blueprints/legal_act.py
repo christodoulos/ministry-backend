@@ -5,6 +5,7 @@ from src.models.psped.change import Change
 from src.models.upload import FileUpload
 import json
 from bson import ObjectId
+from mongoengine.errors import NotUniqueError
 
 legal_act = Blueprint("legal_act", __name__)
 
@@ -18,19 +19,27 @@ def create_legalact():
         legalActFile = FileUpload.objects.get(id=ObjectId(data["legalActFile"]))
         del data["legalActFile"]
         legalAct = LegalAct(**data, legalActFile=legalActFile)
+        print("legalAct>>>>>>:", legalAct.to_mongo().to_dict())
         legalActKey = legalAct.create_key()
 
         what = {"entity": "legalAct", "key": {"code": legalActKey}}
 
         legalAct.save()
         Change(action="create", who=who, what=what, change=legalAct.to_mongo()).save()
+
         return Response(
-            json.dumps({"message": f"Επιτυχής δημιουργία νομικής πράξης <strong>{legalActKey}</strong>"}),
+            json.dumps({"message": f"Επιτυχής δημιουργία νομικής πράξης <strong>{legalAct.key2str}</strong>"}),
             mimetype="application/json",
             status=201,
         )
+    except NotUniqueError:
+        return Response(
+            json.dumps({"message": f"Υπάρχει ήδη νομική πράξη με κωδικό <strong>{legalAct.key2str}</strong>."}),
+            mimetype="application/json",
+            status=409,
+        )
     except Exception as e:
-        print("create_lagalact() ERROR in legal_act.py blueprint", e)
+        print("create_lagalact(): ERROR in legal_act.py blueprint:", e)
         return Response(
             json.dumps({"message": f"Αποτυχία δημιουργίας νομικής πράξης: {e}"}),
             mimetype="application/json",
