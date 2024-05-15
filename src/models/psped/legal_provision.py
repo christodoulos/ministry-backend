@@ -4,7 +4,8 @@ from src.models.psped.legal_act import LegalAct, FEK
 
 class RegulatedObject(me.EmbeddedDocument):
     regulatedObjectType = me.StringField(required=True, choices=["organization", "organizationUnit", "remit"])
-    regulatedObjectObjectId = me.StringField(required=True)
+    regulatedObjectCode = me.StringField(required=True)
+    regulatedObjectObjectId = me.StringField()
 
 
 class Abolition(me.EmbeddedDocument):
@@ -31,7 +32,7 @@ class LegalProvision(me.Document):
     meta = {
         "collection": "legal_provisions",
         "db_alias": "psped",
-        "indexes": [{"fields": ["legalActKey", "legalProvisionSpecs"], "unique": True}],
+        "indexes": [{"fields": ["legalActKey", "legalProvisionSpecs", "regulatedObject"], "unique": True}],
     }
 
     regulatedObject = me.EmbeddedDocumentField(RegulatedObject)
@@ -40,22 +41,22 @@ class LegalProvision(me.Document):
     legalProvisionText = me.StringField(required=True)
     abolition = me.EmbeddedDocumentField(Abolition)
     # The following fields are populated from LegalAct on save
-    legalActType = me.StringField()
-    legalActNumber = me.StringField()
-    legalActTypeOther = me.StringField()
-    legalActYear = me.StringField()
-    ada = me.StringField()
-    fek = me.EmbeddedDocumentField(FEK)
+    # legalActType = me.StringField()
+    # legalActNumber = me.StringField()
+    # legalActTypeOther = me.StringField()
+    # legalActYear = me.StringField()
+    # ada = me.StringField()
+    # fek = me.EmbeddedDocumentField(FEK)
 
-    def save(self, *args, **kwargs):
-        legalActRef = LegalAct.objects.get(legalActKey=self.legalActKey)
-        self.legalActType = legalActRef.legalActType
-        self.legalActNumber = legalActRef.legalActNumber
-        self.legalActTypeOther = legalActRef.legalActTypeOther
-        self.legalActYear = legalActRef.legalActYear
-        self.ada = legalActRef.ada
-        self.fek = legalActRef.fek
-        super(LegalProvision, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     legalActRef = LegalAct.objects.get(legalActKey=self.legalActKey)
+    #     self.legalActType = legalActRef.legalActType
+    #     self.legalActNumber = legalActRef.legalActNumber
+    #     self.legalActTypeOther = legalActRef.legalActTypeOther
+    #     self.legalActYear = legalActRef.legalActYear
+    #     self.ada = legalActRef.ada
+    #     self.fek = legalActRef.fek
+    #     super(LegalProvision, self).save(*args, **kwargs)
 
     def to_dict(self):
         return self.to_mongo().to_dict()

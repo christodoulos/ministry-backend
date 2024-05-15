@@ -64,11 +64,15 @@ def get_all_legal_provisions():
     return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
 
 
-@legal_provision.route("/by_regulated_object/<string:id>", methods=["GET"])
+@legal_provision.route("/by_regulated_organization/<string:code>", methods=["GET"])
 @jwt_required()
-def get_legal_provision(id: str):
+def get_legal_provision(code: str):
     try:
-        legal_provisions = LegalProvision.objects(regulatedObject__regulatedObjectObjectId=id)
+        regulatedObject = RegulatedObject(
+            regulatedObjectType="organization",
+            regulatedObjectCode=code,
+        )
+        legal_provisions = LegalProvision.objects(regulatedObject=regulatedObject)
         return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
     except LegalProvision.DoesNotExist:
         return Response(
