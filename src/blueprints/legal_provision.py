@@ -1,4 +1,3 @@
-from bson import ObjectId
 from flask import Blueprint, request, Response
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from src.models.psped.legal_provision import LegalProvision, RegulatedObject

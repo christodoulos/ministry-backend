@@ -38,23 +38,23 @@ class LegalProvision(me.Document):
     legalActKey = me.StringField(required=True)
     legalProvisionSpecs = me.EmbeddedDocumentField(LegalProvisionSpecs, required=True)
     legalProvisionText = me.StringField(required=True)
+    abolition = me.EmbeddedDocumentField(Abolition)
+    # The following fields are populated from LegalAct on save
     legalActType = me.StringField()
     legalActNumber = me.StringField()
     legalActTypeOther = me.StringField()
     legalActYear = me.StringField()
     ada = me.StringField()
     fek = me.EmbeddedDocumentField(FEK)
-    abolition = me.EmbeddedDocumentField(Abolition)
 
     def save(self, *args, **kwargs):
         legalActRef = LegalAct.objects.get(legalActKey=self.legalActKey)
-        self.fek = legalActRef.fek
         self.legalActType = legalActRef.legalActType
         self.legalActNumber = legalActRef.legalActNumber
         self.legalActTypeOther = legalActRef.legalActTypeOther
-        self.legalActNumber = legalActRef.legalActNumber
         self.legalActYear = legalActRef.legalActYear
         self.ada = legalActRef.ada
+        self.fek = legalActRef.fek
         super(LegalProvision, self).save(*args, **kwargs)
 
     def to_dict(self):
