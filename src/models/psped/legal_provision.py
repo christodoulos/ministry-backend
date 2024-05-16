@@ -5,7 +5,7 @@ from src.models.psped.legal_act import LegalAct, FEK
 class RegulatedObject(me.EmbeddedDocument):
     regulatedObjectType = me.StringField(required=True, choices=["organization", "organizationUnit", "remit"])
     regulatedObjectCode = me.StringField(required=True)
-    regulatedObjectObjectId = me.StringField()
+    # regulatedObjectObjectId = me.StringField()
 
 
 class Abolition(me.EmbeddedDocument):
