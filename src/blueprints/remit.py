@@ -14,22 +14,90 @@ remit = Blueprint("remit", __name__)
 def create_remit():
     who = get_jwt_identity()
     what = "remit"
+
     try:
         data = request.get_json()
-        print(data)
-        legalProvisions = [
-            (legalProvision["legalActKey"], legalProvision["legalProvisionSpecs"])
-            for legalProvision in data["legalProvisions"]
-        ]
-        legalProvisionRefs = [
-            LegalProvision.objects.get(legalActKey=legalActKey, legalProvisionSpecs=legalProvisionSpecs)
-            for legalActKey, legalProvisionSpecs in legalProvisions
-        ]
-        del data["legalProvisions"]
-        remit = Remit(**data, legalProvisionRefs=legalProvisionRefs)
+
+        regulatedObject = data["regulatedObject"]
+        remitType = data["remitType"]
+        cofog = data["cofog"]
+        remitText = data["remitText"]
+        legalProvisions = data["legalProvisions"]
+
+        print(regulatedObject)
+        print(remitType)
+        print(cofog)
+        print(remitText)
+        print(legalProvisions)
+
+        # existingProvisionDocs = LegalProvision.objects(regulatedObject=regulatedObject).exclude("id")
+        # existingProvisions = [provision.to_json() for provision in existingProvisionDocs]
+
+        # print(existingProvisions)
+
+        # updates = {}
+
+        # newLegalProvisionDocs = []
+        # for provision in legalProvisions:
+        #     legalProvision = LegalProvision(
+        #         regulatedObject=regulatedObject,
+        #         legalActKey=provision["legalActKey"],
+        #         legalProvisionSpecs=provision["legalProvisionSpecs"],
+        #         legalProvisionText=provision["legalProvisionText"],
+        #     )
+        #     if legalProvision.to_json() not in existingProvisions:
+        #         newLegalProvisionDocs.append(legalProvision)
+
+        # print(newLegalProvisionDocs)
+
+        # if newLegalProvisionDocs:
+        #     updates["legalProvisions"] = [
+        #         provision
+        #         for provision in [x.to_mongo() for x in newLegalProvisionDocs]
+        #         + [x.to_mongo() for x in existingProvisionDocs]
+        #     ]
+        #     LegalProvision.objects.insert(newLegalProvisionDocs)
+
+        legalProvisionDocs = []
+        for provision in legalProvisions:
+            legalProvision = LegalProvision(
+                regulatedObject=regulatedObject,
+                legalActKey=provision["legalActKey"],
+                legalProvisionSpecs=provision["legalProvisionSpecs"],
+                legalProvisionText=provision["legalProvisionText"],
+            )
+            legalProvisionDocs.append(legalProvision)
+
+        legalProvisionRefs = LegalProvision.objects.insert(legalProvisionDocs)
+
+        organizationalUnitCode = regulatedObject["regulatedObjectCode"]
+
+        remit = Remit(
+            organizationalUnitCode=organizationalUnitCode,
+            remitText=remitText,
+            remitType=remitType,
+            cofog=cofog,
+            legalProvisionRefs=legalProvisionRefs,
+        )
+
         remit.save()
-        Change(action="create", who=who, what=what, change=remit.to_mongo()).save()
-        return Response(remit.to_json(), mimetype="application/json", status=200)
+
+        return Response(json.dumps({"message": "Άντε να δούμε!"}), mimetype="application/json", status=201)
+
+    # legalProvisions = [
+    #     (legalProvision["legalActKey"], legalProvision["legalProvisionSpecs"])
+    #     for legalProvision in data["legalProvisions"]
+    # ]
+    # legalProvisionRefs = [
+    #     LegalProvision.objects.get(legalActKey=legalActKey, legalProvisionSpecs=legalProvisionSpecs)
+    #     for legalActKey, legalProvisionSpecs in legalProvisions
+    # ]
+    # del data["legalProvisions"]
+    # remit = Remit(**data, legalProvisionRefs=legalProvisionRefs)
+    # remit.save()
+    # Change(action="create", who=who, what=what, change=remit.to_mongo()).save()
+    # return Response(remit.to_json(), mimetype="application/json", status=200)
+
     except Exception as e:
         print(e)
         return Response(
@@ -54,7 +122,7 @@ def retrieve_all_remit():
 @jwt_required()
 def count_all_remits():
     count = Remit.objects().count()
-    return Response(json.dumps({"count": count}), mimetype="application/json", status=200)
+    return Response(json.dumps({"count": count}), mimetype="application/json", status=201)
 
 
 # @remit.route("/remit", methods=["POST"])

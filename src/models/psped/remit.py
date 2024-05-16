@@ -3,11 +3,6 @@ from src.config import MONGO_PSPED_DB
 from src.models.psped.legal_provision import LegalProvision
 
 
-# class RegulatedObjectCode(me.EmbeddedDocument):
-#     organization = me.StringField(required=True)
-#     organizationalUnit = me.StringField(required=True)
-
-
 class COFOG(me.EmbeddedDocument):
     cofog1 = me.StringField(required=True)
     cofog2 = me.StringField(required=True)
@@ -17,7 +12,6 @@ class COFOG(me.EmbeddedDocument):
 class Remit(me.Document):
     meta = {"collection": "remits", "db_alias": MONGO_PSPED_DB}
 
-    # regulatedObject = me.EmbeddedDocumentField(RegulatedObjectCode, required=True)
     organizationalUnitCode = me.StringField(required=True)
     remitText = me.StringField(required=True)
     remitType = me.StringField(
