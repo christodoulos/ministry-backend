@@ -33,7 +33,7 @@ def create_remit():
     except Exception as e:
         print(e)
         return Response(
-            json.dumps({"error": f"Αποτυχία δημιουργίας αρμοδιότητας: {e}"}),
+            json.dumps({"message": f"<strong>Αποτυχία δημιουργίας αρμοδιότητας:</strong> {e}"}),
             mimetype="application/json",
             status=500,
         )
