@@ -47,68 +47,69 @@ def get_foreas(code: str):
 def update_foreas(code: str):
     who = get_jwt_identity()
 
-    try:
-        data = request.get_json()
+    # try:
 
-        foreas_code = data["code"]
-        regulatedObject = RegulatedObject(
-            regulatedObjectType="organization",
-            regulatedObjectCode=foreas_code,
+    data = request.get_json()
+
+    foreas_code = data["code"]
+    regulatedObject = RegulatedObject(
+        regulatedObjectType="organization",
+        regulatedObjectCode=foreas_code,
+    )
+    level = data["level"]
+    legalProvisions = data["legalProvisions"]
+
+    existingProvisionDocs = LegalProvision.objects(regulatedObject=regulatedObject).exclude("id")
+    existingProvisions = [provision.to_json() for provision in existingProvisionDocs]
+
+    updates = {}
+
+    newLegalProvisionDocs = []
+    for provision in legalProvisions:
+        legalProvision = LegalProvision(
+            regulatedObject=regulatedObject,
+            legalActKey=provision["legalActKey"],
+            legalProvisionSpecs=provision["legalProvisionSpecs"],
+            legalProvisionText=provision["legalProvisionText"],
         )
-        level = data["level"]
-        legalProvisions = data["legalProvisions"]
+        if legalProvision.to_json() not in existingProvisions:
+            newLegalProvisionDocs.append(legalProvision)
 
-        existingProvisionDocs = LegalProvision.objects(regulatedObject=regulatedObject).exclude("id")
-        existingProvisions = [provision.to_json() for provision in existingProvisionDocs]
+    if newLegalProvisionDocs:
+        updates["legalProvisions"] = [
+            provision
+            for provision in [x.to_mongo() for x in newLegalProvisionDocs]
+            + [x.to_mongo() for x in existingProvisionDocs]
+        ]
+        LegalProvision.objects.insert(newLegalProvisionDocs)
 
-        updates = {}
+    foreas = Foreas.objects.get(code=foreas_code)
+    if foreas.level != level:
+        updates["level"] = level
+        foreas.level = level
+        foreas.save()
 
-        newLegalProvisionDocs = []
-        for provision in legalProvisions:
-            legalProvision = LegalProvision(
-                regulatedObject=regulatedObject,
-                legalActKey=provision["legalActKey"],
-                legalProvisionSpecs=provision["legalProvisionSpecs"],
-                legalProvisionText=provision["legalProvisionText"],
-            )
-            if legalProvision.to_json() not in existingProvisions:
-                newLegalProvisionDocs.append(legalProvision)
+    if updates:
+        what = {"entity": "organization", "key": {"code": foreas_code}}
+        Change(action="update", who=who, what=what, change=updates).save()
 
-        if newLegalProvisionDocs:
-            updates["legalProvisions"] = [
-                provision
-                for provision in [x.to_mongo() for x in newLegalProvisionDocs]
-                + [x.to_mongo() for x in existingProvisionDocs]
-            ]
-            LegalProvision.objects.insert(newLegalProvisionDocs)
-
-        foreas = Foreas.objects.get(code=foreas_code)
-        if foreas.level != level:
-            updates["level"] = level
-            foreas.level = level
-            foreas.save()
-
-        if updates:
-            what = {"entity": "organization", "key": {"code": foreas_code}}
-            Change(action="update", who=who, what=what, change=updates).save()
-
-            return Response(
-                json.dumps({"message": "<strong>Επιτυχής ενημέρωση του φορέα</strong>"}),
-                mimetype="application/json",
-                status=201,
-            )
-        else:
-            return Response(
-                json.dumps({"message": "<strong>Δεν υπήρξε κάποια αλλαγή</strong>"}),
-                mimetype="application/json",
-                status=211,
-            )
-    except Foreas.DoesNotExist:
         return Response(
-            json.dumps({"error": f"Δεν βρέθηκε φορέας με κωδικό {code}"}),
+            json.dumps({"message": "<strong>Επιτυχής ενημέρωση του φορέα</strong>"}),
             mimetype="application/json",
-            status=404,
+            status=201,
         )
+    else:
+        return Response(
+            json.dumps({"message": "<strong>Δεν υπήρξε κάποια αλλαγή</strong>"}),
+            mimetype="application/json",
+            status=211,
+        )
+    # except Foreas.DoesNotExist:
+    #     return Response(
+    #         json.dumps({"error": f"Δεν βρέθηκε φορέας με κωδικό {code}"}),
+    #         mimetype="application/json",
+    #         status=404,
+    #     )
 
 
 @psped.route("/foreas/<string:code>/tree")
