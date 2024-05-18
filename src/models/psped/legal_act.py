@@ -33,11 +33,11 @@ class LegalAct(me.Document):
             "ΑΠΟΦΑΣΗ ΤΟΥ ΟΡΓΑΝΟΥ ΔΙΟΙΚΗΣΗΣ",
             "ΑΛΛΟ",
         ],
-        unique_with=["legalActTypeOther", "legalActNumber", "legalActYear"],
+        unique_with=["legalActTypeOther", "legalActNumber", "legalActDateOrYear"],
     )
-    legalActTypeOther = me.StringField(unique_with=["legalActNumber", "legalActYear"])
+    legalActTypeOther = me.StringField(unique_with=["legalActNumber", "legalActDateOrYear"])
     legalActNumber = me.StringField(required=True)
-    legalActYear = me.StringField(required=True)
+    legalActDateOrYear = me.StringField(required=True)
     fek = me.EmbeddedDocumentField(FEK, unique=True)
     ada = me.StringField(default=default_ada, unique=True)
     legalActFile = me.ReferenceField(FileUpload, required=True)
@@ -65,12 +65,12 @@ class LegalAct(me.Document):
 
     @property
     def fek_filename(self):
-        return f"{self.legalActTypeGeneral} {self.legalActNumber}/{self.legalActYear} {self.fek_info}"
+        return f"{self.legalActTypeGeneral} {self.legalActNumber}/{self.legalActDateOrYear} {self.fek_info}"
 
     @property
     def key2str(self):
         if "ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ" in self.fek_info:
-            return f"{self.legalActTypeGeneral} {self.legalActNumber}/{self.legalActYear} ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ"
+            return f"{self.legalActTypeGeneral} {self.legalActNumber}/{self.legalActDateOrYear} ΜΗ ΔΗΜΟΣΙΕΥΤΕΑ ΠΡΑΞΗ"
         else:
             return self.legalActKey
 
@@ -88,9 +88,9 @@ class LegalAct(me.Document):
                 raise ValueError(
                     "Ο τύπος πράξης δεν μπορεί να είναι κάποια από τις τιμές 'ΝΟΜΟΣ', 'ΠΡΟΕΔΡΙΚΟ ΔΙΑΤΑΓΜΑ', 'ΚΑΝΟΝΙΣΤΙΚΗ ΔΙΟΙΚΗΤΙΚΗ ΠΡΑΞΗ', 'ΑΠΟΦΑΣΗ ΤΟΥ ΟΡΓΑΝΟΥ ΔΙΟΙΚΗΣΗΣ', 'ΑΛΛΟ'"
                 )
-            return f"{self.legalActTypeOther} {self.legalActNumber}/{self.legalActYear} {self.fek_info}"
+            return f"{self.legalActTypeOther} {self.legalActNumber}/{self.legalActDateOrYear} {self.fek_info}"
         else:
-            return f"{self.legalActType} {self.legalActNumber}/{self.legalActYear} {self.fek_info}"
+            return f"{self.legalActType} {self.legalActNumber}/{self.legalActDateOrYear} {self.fek_info}"
 
     def save(self, *args, **kwargs):
         legalActKey = self.create_key()
