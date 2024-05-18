@@ -42,11 +42,6 @@ class LegalAct(me.Document):
     ada = me.StringField(default=default_ada, unique=True)
     legalActFile = me.ReferenceField(FileUpload, required=True)
 
-    def to_json(self):
-        data = self.to_mongo()
-        data["legalActFile"] = str(self.legalActFile.id)
-        return json.dumps(data)
-
     @property
     def fek_info(self):
         if not self.fek.number or not self.fek.issue or not self.fek.date:

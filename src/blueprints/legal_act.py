@@ -1,6 +1,6 @@
 from flask import Blueprint, request, Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.models.psped.legal_act import LegalAct
+from src.models.psped.legal_act import FEK, LegalAct
 from src.models.psped.change import Change
 from src.models.upload import FileUpload
 import json
@@ -47,6 +47,55 @@ def create_legalact():
         )
 
 
+@legal_act.route("/<string:id>", methods=["PUT"])
+@jwt_required()
+def update_legalact(id):
+    who = get_jwt_identity()
+    try:
+        data = request.get_json()
+        print("LEGAL ACT UPDATE DATA>>>>>>:", data)
+        # data["legalActFile"] = ObjectId(data["legalActFile"]["$oid"])
+        # print(data)
+        # updatedLegalAct = LegalAct.objects.get(id=ObjectId(id)).update(**data)
+        # print("updatedLegalAct>>>>>>:", updatedLegalAct)
+        legalAct = LegalAct.objects.get(id=ObjectId(id))
+        legalActFile = FileUpload.objects.get(id=ObjectId(data["legalActFile"]["$oid"]))
+        del data["legalActFile"]
+        for key, value in data.items():
+            if hasattr(legalAct, key):
+                if key == "fek":
+                    fek = FEK(**value)
+                    setattr(legalAct, key, fek)
+                elif key == "legalActFile":
+                    setattr(legalAct, key, legalActFile)
+                else:
+                    setattr(legalAct, key, value)
+
+        legalAct.save()
+        what = {"entity": "legalAct", "key": {"code": id}}
+
+        Change(action="update", who=who, what=what, change=data).save()
+
+        return Response(
+            json.dumps({"message": f"Επιτυχής ενημέρωση νομικής πράξης <strong>{legalAct.key2str}</strong>"}),
+            mimetype="application/json",
+            status=201,
+        )
+    except LegalAct.DoesNotExist:
+        return Response(
+            json.dumps({"message": f"Νομική πράξη με id {id} δεν βρέθηκε"}),
+            mimetype="application/json",
+            status=404,
+        )
+    except Exception as e:
+        print(e)
+        return Response(
+            json.dumps({"message": f"Αποτυχία ενημέρωσης νομικής πράξης: {e}"}),
+            mimetype="application/json",
+            status=500,
+        )
+
+
 @legal_act.route("", methods=["GET"])
 @jwt_required()
 def list_all_nomikes_praxeis():
@@ -59,6 +108,22 @@ def list_all_nomikes_praxeis():
 def count_all_nomikes_praxeis():
     count = LegalAct.objects().count()
     return Response(json.dumps({"count": count}), mimetype="application/json", status=200)
+
+
+@legal_act.route("/get-by-id/<string:id>", methods=["GET"])
+@jwt_required()
+def get_nomiki_praxi_by_id(id):
+    try:
+        print("id>>>>>>:", id)
+        legalAct = LegalAct.objects.get(id=ObjectId(id))
+        print("legalAct>>>>>>:", legalAct.to_mongo().to_dict())
+        return Response(legalAct.to_json(), mimetype="application/json", status=200)
+    except LegalAct.DoesNotExist:
+        return Response(
+            json.dumps({"message": f"Νομική πράξη με id {id} δεν βρέθηκε"}),
+            mimetype="application/json",
+            status=404,
+        )
 
 
 # @legal_act.route("/nomikes_praxeis/<string:code>", methods=["GET"])
