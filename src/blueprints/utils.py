@@ -22,3 +22,12 @@ def attribute_to_greek(attribute):
 
 def dict2string(d):
     return ", ".join([f"{attribute_to_greek(k)} {v}" for k, v in d.items() if v])
+
+
+def debug_print(message, what):
+    print(f"{80*'='}\n{message}\n{80*'='}")
+    try:
+        for key, value in what.items():
+            print(f"{key}: {value}")
+    except Exception:
+        print(what)

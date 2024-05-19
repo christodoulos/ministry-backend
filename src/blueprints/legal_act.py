@@ -6,6 +6,7 @@ from src.models.upload import FileUpload
 import json
 from bson import ObjectId
 from mongoengine.errors import NotUniqueError
+from src.blueprints.utils import debug_print
 
 legal_act = Blueprint("legal_act", __name__)
 
@@ -19,7 +20,7 @@ def create_legalact():
         legalActFile = FileUpload.objects.get(id=ObjectId(data["legalActFile"]))
         del data["legalActFile"]
         legalAct = LegalAct(**data, legalActFile=legalActFile)
-        print("legalAct>>>>>>:", legalAct.to_mongo().to_dict())
+
         legalActKey = legalAct.create_key()
 
         what = {"entity": "legalAct", "key": {"code": legalActKey}}
@@ -53,14 +54,16 @@ def update_legalact(id):
     who = get_jwt_identity()
     try:
         data = request.get_json()
-        print("LEGAL ACT UPDATE DATA>>>>>>:", data)
-        # data["legalActFile"] = ObjectId(data["legalActFile"]["$oid"])
-        # print(data)
-        # updatedLegalAct = LegalAct.objects.get(id=ObjectId(id)).update(**data)
-        # print("updatedLegalAct>>>>>>:", updatedLegalAct)
+        debug_print("LEGAL ACT PUT DATA", data)
+        # Find the legalAct to be updated by its id
         legalAct = LegalAct.objects.get(id=ObjectId(id))
-        legalActFile = FileUpload.objects.get(id=ObjectId(data["legalActFile"]["$oid"]))
-        del data["legalActFile"]
+        foundLegalActKey = legalAct.legalActKey  # Save the key of the found legalAct for "what"
+        debug_print("FOUND LEGAL ACT", legalAct.to_mongo().to_dict())
+        try:
+            legalActFile = FileUpload.objects.get(id=ObjectId(data["legalActFile"]["$oid"]))
+        except Exception:
+            legalActFile = FileUpload.objects.get(id=ObjectId(data["legalActFile"]))
+        # Update the found legalAct with the new data
         for key, value in data.items():
             if hasattr(legalAct, key):
                 if key == "fek":
@@ -70,17 +73,35 @@ def update_legalact(id):
                     setattr(legalAct, key, legalActFile)
                 else:
                     setattr(legalAct, key, value)
+        # Generate a new legalActKey based on the updated data
+        legalActKey = legalAct.create_key()
+        legalAct.legalActKey = legalActKey
+        debug_print("UPDATED LEGAL ACT", legalAct.to_mongo().to_dict())
+        updatedLegalAct = legalAct.to_mongo()  # Save the updated legalAct for "change"
+        updatedLegalActDict = updatedLegalAct.to_dict()  # Convert the updated legalAct to a dictionary
+        del updatedLegalActDict["_id"]  # legalAct to be updated already has an id
+        legalAct.update(**updatedLegalActDict)  # Update the legalAct with the new data
+        what = {"entity": "legalAct", "key": {"legalActKey": foundLegalActKey}}
+        # Save the change in the database
+        Change(action="update", who=who, what=what, change=updatedLegalAct).save()
 
-        legalAct.save()
-        what = {"entity": "legalAct", "key": {"code": id}}
+        if legalActKey == foundLegalActKey:
+            return Response(
+                json.dumps({"message": f"Επιτυχής ενημέρωση νομικής πράξης <strong>{legalActKey}</strong>"}),
+                mimetype="application/json",
+                status=201,
+            )
+        else:
+            return Response(
+                json.dumps(
+                    {
+                        "message": f"Επιτυχής ενημέρωση νομικής πράξης <strong>{foundLegalActKey}</strong> σε <strong>{legalActKey}</strong>"
+                    }
+                ),
+                mimetype="application/json",
+                status=201,
+            )
 
-        Change(action="update", who=who, what=what, change=data).save()
-
-        return Response(
-            json.dumps({"message": f"Επιτυχής ενημέρωση νομικής πράξης <strong>{legalAct.key2str}</strong>"}),
-            mimetype="application/json",
-            status=201,
-        )
     except LegalAct.DoesNotExist:
         return Response(
             json.dumps({"message": f"Νομική πράξη με id {id} δεν βρέθηκε"}),
@@ -114,9 +135,7 @@ def count_all_nomikes_praxeis():
 @jwt_required()
 def get_nomiki_praxi_by_id(id):
     try:
-        print("id>>>>>>:", id)
         legalAct = LegalAct.objects.get(id=ObjectId(id))
-        print("legalAct>>>>>>:", legalAct.to_mongo().to_dict())
         return Response(legalAct.to_json(), mimetype="application/json", status=200)
     except LegalAct.DoesNotExist:
         return Response(
@@ -124,57 +143,3 @@ def get_nomiki_praxi_by_id(id):
             mimetype="application/json",
             status=404,
         )
-
-
-# @legal_act.route("/nomikes_praxeis/<string:code>", methods=["GET"])
-# def get_nomiki_praxi(code):
-#     try:
-#         nomiki_praxi = LegalAct.objects.get(legalActCode=code)
-#         return Response(nomiki_praxi.to_json(), mimetype="application/json", status=200)
-#     except LegalAct.DoesNotExist:
-#         return Response(
-#             json.dumps({"error": f"Νομική πράξη με κωδικό {code} δεν βρέθηκε"}),
-#             mimetype="application/json",
-#             status=404,
-#         )
-
-
-# @legal_act.route("/nomikes_praxeis/<string:code>", methods=["PUT"])
-# def update_nomiki_praxi(code):
-#     data = request.get_json()
-
-#     immutable_fields: list = ["legalActCode", "creationDate", "userCode"]
-#     update_fields = data.keys()
-
-#     if any(field in update_fields for field in immutable_fields):
-#         return Response(
-#             json.dumps({"error": "Μη επιτρεπτή ενημέρωση πεδίων: legalActCode, creationDate, userCode"}),
-#             mimetype="application/json",
-#             status=400,
-#         )
-#     try:
-#         nomiki_praxi = LegalAct.objects.get(legalActCode=code)
-#     except LegalAct.DoesNotExist:
-#         return Response(
-#             json.dumps({"error": f"Νομική πράξη με κωδικό {code} δεν βρέθηκε"}),
-#             mimetype="application/json",
-#             status=404,
-#         )
-#     try:
-#         for key, value in data.items():
-#             if hasattr(nomiki_praxi, key):
-#                 if key == "fek":
-#                     fek = FEK(**value)
-#                     setattr(nomiki_praxi, key, fek)
-#                 else:
-#                     setattr(nomiki_praxi, key, value)
-
-#         nomiki_praxi.updateDate = datetime.now()
-#         nomiki_praxi.save()
-#         return Response(nomiki_praxi.to_json(), mimetype="application/json", status=200)
-#     except Exception as e:
-#         return Response(
-#             json.dumps({"error": f"Αποτυχία ενημέρωσης νομικής πράξης: {e}"}),
-#             mimetype="application/json",
-#             status=500,
-#         )
