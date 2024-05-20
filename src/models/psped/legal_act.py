@@ -20,7 +20,6 @@ class LegalAct(me.Document):
     meta = {
         "collection": "legal_acts",
         "db_alias": "psped",
-        "indexes": [{"fields": ["legalActKey"], "unique": True}],
     }
 
     legalActKey = me.StringField(unique=True)

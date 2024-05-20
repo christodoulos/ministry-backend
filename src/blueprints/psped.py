@@ -112,56 +112,86 @@ def update_foreas(code: str):
     )
     debug_print("REGULATED OBJECT", regulatedObject.to_mongo().to_dict())
 
+    legal_provisions_changes_updates = []
+    legal_provisions_changes_inserts = []
+    for provision in legalProvisions:
+        legalActKey = provision["legalActKey"]
+        legalAct = LegalAct.objects.get(legalActKey=legalActKey)
+        legalProvisionSpecs = provision["legalProvisionSpecs"]
+        legalProvisionText = provision["legalProvisionText"]
+        existing = LegalProvision.objects(
+            regulatedObject=regulatedObject, legalAct=legalAct, legalProvisionSpecs=legalProvisionSpecs
+        ).first()
+        debug_print("CURRENT LEGAL PROVISION", provision)
+        if existing:
+            print("EXISTING LEGAL PROVISION FOUND")
+            existing.update(legalProvisionText=legalProvisionText)
+            success_message += f"Ενημέρωση διάταξης {legalActKey} ({dict2string(legalProvisionSpecs)}). "
+            legal_provisions_changes_updates.append(existing.to_mongo())
+        else:
+            print("NO EXISTING LEGAL PROVISION FOUND")
+            legalProvision = LegalProvision(
+                regulatedObject=regulatedObject,
+                legalAct=legalAct,
+                legalProvisionSpecs=legalProvisionSpecs,
+                legalProvisionText=legalProvisionText,
+            )
+            legalProvision.save()
+            success_message += f"Προσθήκη διάταξης {legalActKey} ({dict2string(legalProvisionSpecs)}). "
+            legal_provisions_changes_inserts.append(legalProvision.to_mongo())
     # Find the existing legal provisions for the organization
-    existing_legal_provision_docs = LegalProvision.objects(regulatedObject=regulatedObject)
+    # existing_legal_provision_docs = LegalProvision.objects(regulatedObject=regulatedObject)
     # Find the  legal provisions from data["legalProvisions"] that are not included in the existing legal provisions
 
-    existing_legal_provisions = [provision.to_json() for provision in existing_legal_provision_docs]
+    # existing_legal_provisions = [provision.to_json() for provision in existing_legal_provision_docs]
     #     legalAct = LegalAct.objects.get(id=legalActRef)
     #     legalActKey = legalAct.legalActKey
     #     provision.legalActKey = legalActKey
-    debug_print("EXISTING LEGAL PROVISIONS", existing_legal_provisions)
-    new_legal_provisions = [provision for provision in legalProvisions if provision not in existing_legal_provisions]
-    debug_print("NEW LEGAL PROVISIONS", new_legal_provisions)
+    # debug_print("EXISTING LEGAL PROVISIONS", existing_legal_provisions)
+    # new_legal_provisions = [provision for provision in legalProvisions if provision not in existing_legal_provisions]
+    # debug_print("NEW LEGAL PROVISIONS", new_legal_provisions)
 
     # success_message += "Προσθήκη νέων διατάξεων: "
-    legal_provisions_str = ""
-    legal_provisions_changes = []
-    for provision in new_legal_provisions:
-        legalProvisionSpecs = provision["legalProvisionSpecs"]
-        if not any(legalProvisionSpecs.values()):
-            return Response(
-                json.dumps({"message": f"{error_message}Κάποιο πεδίο της Διάταξης πρέπει να συμπληρωθεί"}),
-                mimetype="application/json",
-                status=400,
-            )
-        legalAct = LegalAct.objects.get(legalActKey=provision["legalActKey"])
-        legalProvision = LegalProvision(
-            regulatedObject=regulatedObject,
-            legalAct=legalAct,
-            legalProvisionSpecs=legalProvisionSpecs,
-            legalProvisionText=provision["legalProvisionText"],
-        )
-        try:
-            legalProvision.save()
-            legal_provisions_str += f"{provision['legalActKey']} ({dict2string(legalProvisionSpecs)}), "
-            legal_provisions_changes.append(legalProvision.to_mongo())
-        except NotUniqueError:
-            return Response(
-                json.dumps(
-                    {
-                        "message": f"{error_message}Υπάρχει ήδη διάταξη με κωδικό {provision['legalActKey']} ({dict2string(legalProvisionSpecs)})"
-                    }
-                ),
-                mimetype="application/json",
-                status=409,
-            )
+    # legal_provisions_str = ""
+    # legal_provisions_changes = []
+    # for provision in new_legal_provisions:
+    #     legalProvisionSpecs = provision["legalProvisionSpecs"]
+    #     if not any(legalProvisionSpecs.values()):
+    #         return Response(
+    #             json.dumps({"message": f"{error_message}Κάποιο πεδίο της Διάταξης πρέπει να συμπληρωθεί"}),
+    #             mimetype="application/json",
+    #             status=400,
+    #         )
+    #     legalAct = LegalAct.objects.get(legalActKey=provision["legalActKey"])
+    #     legalProvision = LegalProvision(
+    #         regulatedObject=regulatedObject,
+    #         legalAct=legalAct,
+    #         legalProvisionSpecs=legalProvisionSpecs,
+    #         legalProvisionText=provision["legalProvisionText"],
+    #     )
+    #     try:
+    #         legalProvision.save()
+    #         legal_provisions_str += f"{provision['legalActKey']} ({dict2string(legalProvisionSpecs)}), "
+    #         legal_provisions_changes.append(legalProvision.to_mongo())
+    #     except NotUniqueError:
+    #         return Response(
+    #             json.dumps(
+    #                 {
+    #                     "message": f"{error_message}Υπάρχει ήδη διάταξη με κωδικό {provision['legalActKey']} ({dict2string(legalProvisionSpecs)})"
+    #                 }
+    #             ),
+    #             mimetype="application/json",
+    #             status=409,
+    #         )
 
-    curr_change["legalProvisions"] = legal_provisions_changes
-    if len(legalProvisions) == 1:
-        success_message += f"Προσθήκη νέας διάταξης: {legal_provisions_str}"
-    elif len(legalProvisions) > 1:
-        success_message += f"Προσθήκη νέων διατάξεων: {legal_provisions_str}"
+    curr_change["legalProvisions"] = {
+        "inserts": legal_provisions_changes_inserts,
+        "updates": legal_provisions_changes_updates,
+    }
+    # if len(legalProvisions) == 1:
+    #     success_message += f"Προσθήκη νέας διάταξης: {legal_provisions_str}"
+    # elif len(legalProvisions) > 1:
+    #     success_message += f"Προσθήκη νέων διατάξεων: {legal_provisions_str}"
 
     who = get_jwt_identity()
     what = {"entity": "organization", "key": {"code": code}}

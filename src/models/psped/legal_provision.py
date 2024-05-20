@@ -33,10 +33,11 @@ class LegalProvision(me.Document):
     meta = {
         "collection": "legal_provisions",
         "db_alias": "psped",
-        "indexes": [{"fields": ["legalAct", "legalProvisionSpecs", "regulatedObject"], "unique": True}],
     }
 
-    regulatedObject = me.EmbeddedDocumentField(RegulatedObject)
+    regulatedObject = me.EmbeddedDocumentField(
+        RegulatedObject, required=True, unique_with=["legalAct", "legalProvisionSpecs"]
+    )
     legalAct = me.ReferenceField(LegalAct, required=True)
     legalProvisionSpecs = me.EmbeddedDocumentField(LegalProvisionSpecs, required=True)
     legalProvisionText = me.StringField(required=True)
