@@ -4,7 +4,8 @@ from src.models.psped.legal_act import LegalAct, FEK
 
 class RegulatedObject(me.EmbeddedDocument):
     regulatedObjectType = me.StringField(required=True, choices=["organization", "organizationUnit", "remit"])
-    regulatedObjectCode = me.StringField(required=True)
+    # regulatedObjectCode = me.StringField(required=True)
+    regulatedObjectId = me.ObjectIdField(required=True)
     # regulatedObjectObjectId = me.StringField()
 
 
@@ -25,18 +26,18 @@ class LegalProvisionSpecs(me.EmbeddedDocument):
         super(LegalProvisionSpecs, self).validate(clean)
         fields = [self.meros, self.arthro, self.paragrafos, self.edafio, self.pararthma]
         if not any(fields):
-            raise me.ValidationError("LegalProvisionSpecs must have at least one field filled")
+            raise me.ValidationError("Κάποιο πεδίο της Διάταξης πρέπει να συμπληρωθεί")
 
 
 class LegalProvision(me.Document):
     meta = {
         "collection": "legal_provisions",
         "db_alias": "psped",
-        "indexes": [{"fields": ["legalActKey", "legalProvisionSpecs", "regulatedObject"], "unique": True}],
+        "indexes": [{"fields": ["legalAct", "legalProvisionSpecs", "regulatedObject"], "unique": True}],
     }
 
     regulatedObject = me.EmbeddedDocumentField(RegulatedObject)
-    legalActKey = me.StringField(required=True)
+    legalAct = me.ReferenceField(LegalAct, required=True)
     legalProvisionSpecs = me.EmbeddedDocumentField(LegalProvisionSpecs, required=True)
     legalProvisionText = me.StringField(required=True)
     abolition = me.EmbeddedDocumentField(Abolition)

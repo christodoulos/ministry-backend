@@ -1,8 +1,10 @@
 from flask import Blueprint, request, Response
 from flask_jwt_extended import get_jwt_identity, jwt_required
+from src.models.psped.foreas import Foreas
+from src.models.psped.legal_act import LegalAct
 from src.models.psped.legal_provision import LegalProvision, RegulatedObject
 from src.models.psped.change import Change
-from .utils import dict2string
+from .utils import dict2string, debug_print
 import json
 from mongoengine.errors import NotUniqueError
 
@@ -67,17 +69,43 @@ def get_all_legal_provisions():
 @legal_provision.route("/by_regulated_organization/<string:code>", methods=["GET"])
 @jwt_required()
 def get_legal_provision(code: str):
-    try:
-        regulatedObject = RegulatedObject(
-            regulatedObjectType="organization",
-            regulatedObjectCode=code,
-        )
-        legal_provisions = LegalProvision.objects(regulatedObject=regulatedObject)
-        return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
-    except LegalProvision.DoesNotExist:
-        return Response(
-            json.dumps({"error": f"Δεν βρέθηκε διάταξη με κωδικό {id}"}), mimetype="application/json", status=404
-        )
+    organization = Foreas.objects.get(code=code)
+    # debug_print("LEGAL PROVISIONS BY ORGANIZATION CODE", organization.to_mongo().to_dict())
+    organization_id = organization.id
+    regulatedObject = RegulatedObject(
+        regulatedObjectType="organization",
+        regulatedObjectId=organization_id,
+    )
+
+    legal_provisions = [provision.to_dict() for provision in LegalProvision.objects(regulatedObject=regulatedObject)]
+    # debug_print("LEGAL PROVISIONS BY ORGANIZATION CODE", legal_provisions)
+
+    for provision in legal_provisions:
+        # Determize legalActKey from legalActRef
+        legalActRef = provision["legalAct"]
+        legalAct = LegalAct.objects.get(id=legalActRef)
+        legalActKey = legalAct.legalActKey
+        # Add legalActKey to provision
+        provision["legalActKey"] = legalActKey
+        # Delete all ObjectId fields as they are not JSON serializable
+        del provision["legalAct"]
+        del provision["_id"]
+        del provision["regulatedObject"]
+
+    # debug_print("LEGAL PROVISIONS BY ORGANIZATION CODE", legal_provisions)
+
+    return Response(json.dumps(legal_provisions), mimetype="application/json", status=200)
+    # try:
+    #     regulatedObject = RegulatedObject(
+    #         regulatedObjectType="organization",
+    #         regulatedObjectCode=code,
+    #     )
+    #     legal_provisions = LegalProvision.objects(regulatedObject=regulatedObject)
+    #     return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
+    # except LegalProvision.DoesNotExist:
+    #     return Response(
+    #         json.dumps({"error": f"Δεν βρέθηκε διάταξη με κωδικό {id}"}), mimetype="application/json", status=404
+    #     )
 
 
 # @legal_provision.route("/from_list_of_ids", methods=["POST"])

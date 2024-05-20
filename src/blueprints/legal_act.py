@@ -131,9 +131,9 @@ def count_all_nomikes_praxeis():
     return Response(json.dumps({"count": count}), mimetype="application/json", status=200)
 
 
-@legal_act.route("/get-by-id/<string:id>", methods=["GET"])
+@legal_act.route("/by-id/<string:id>", methods=["GET"])
 @jwt_required()
-def get_nomiki_praxi_by_id(id):
+def get_nomiki_praxi_by_id(id: str):
     try:
         legalAct = LegalAct.objects.get(id=ObjectId(id))
         return Response(legalAct.to_json(), mimetype="application/json", status=200)
