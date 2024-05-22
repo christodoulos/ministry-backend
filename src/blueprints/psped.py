@@ -198,7 +198,7 @@ def update_foreas(code: str):
     Change(action="update", who=who, what=what, change=curr_change).save()
 
     return Response(
-        json.dumps({"message": success_message}),
+        json.dumps({"message": "<strong>Ο φορέας ενημερώθηκε</strong>"}),
         mimetype="application/json",
         status=201,
     )

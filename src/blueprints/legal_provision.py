@@ -114,14 +114,58 @@ def get_legal_provision(code: str):
 @can_delete
 def delete_legal_provision():
     data = request.get_json()
-
     debug_print("DELETE LEGAL PROVISION", data)
+
     code = data["code"]
+    legalProvisionType = data["provisionType"]
+    foreas = Foreas.objects.get(code=code)
+    regulatedObject = RegulatedObject(
+        regulatedObjectType=legalProvisionType,
+        regulatedObjectId=foreas.id,
+    )
+
     legalActKey = data["provision"]["legalActKey"]
+    legalAct = LegalAct.objects.get(legalActKey=legalActKey)
     legalProvisionSpecs = data["provision"]["legalProvisionSpecs"]
-    # legal_provision = LegalProvision.objects.get(id=data["id"])
-    # legal_provision.delete()
-    return Response(json.dumps({"message": "Legal Provision Deleted"}), mimetype="application/json", status=201)
+
+    legalProvision = LegalProvision.objects(
+        legalAct=legalAct, legalProvisionSpecs=legalProvisionSpecs, regulatedObject=regulatedObject
+    ).first()
+
+    if not legalProvision:
+        return Response(
+            json.dumps(
+                {
+                    "message": "Η διάταξη δεν είχε αποθηκευτεί στη βάση δεδομένων. Απλά διαγράφηκε από την λίστα που εμφανίζεται."
+                }
+            ),
+            mimetype="application/json",
+            status=201,
+        )
+
+    debug_print("DELETE LEGAL PROVISION", legalProvision.to_dict())
+
+    try:
+        legalProvision.delete()
+        who = get_jwt_identity()
+        what = {
+            "entity": "legalProvision",
+            "key": {
+                "code": code,
+                "legalProvisionType": legalProvisionType,
+                "legalActKey": legalActKey,
+                "legalProvisionSpecs": legalProvisionSpecs,
+            },
+        }
+        Change(action="delete", who=who, what=what, change=legalProvision.to_mongo()).save()
+        return Response(
+            json.dumps({"message": "<strong>H διάταξη διαγράφηκε</strong>"}), mimetype="application/json", status=201
+        )
+    except Exception as e:
+        print(e)
+        return Response(
+            json.dumps({"message": f"<strong>Error:</strong> {str(e)}"}), mimetype="application/json", status=500
+        )
 
 
 # @legal_provision.route("/from_list_of_ids", methods=["POST"])
