@@ -7,63 +7,64 @@ from src.models.psped.change import Change
 from .utils import dict2string, debug_print
 import json
 from mongoengine.errors import NotUniqueError
+from src.blueprints.decorators import can_delete
 
 
 legal_provision = Blueprint("legal_provision", __name__)
 
 
-@legal_provision.route("", methods=["POST"])
-@jwt_required()
-def create_legal_provision():
-    who = get_jwt_identity()
-    what = "legalProvision"
-    try:
-        data = request.get_json()
-        print(data)
-        legal_provision = LegalProvision(**data)
-        legalActKey = legal_provision.legalActKey
-        legalProvisionSpecs = legal_provision.legalProvisionSpecs
+# @legal_provision.route("", methods=["POST"])
+# @jwt_required()
+# def create_legal_provision():
+#     who = get_jwt_identity()
+#     what = "legalProvision"
+#     try:
+#         data = request.get_json()
+#         print(data)
+#         legal_provision = LegalProvision(**data)
+#         legalActKey = legal_provision.legalActKey
+#         legalProvisionSpecs = legal_provision.legalProvisionSpecs
 
-        legalProvisonSpecsStr = dict2string(legalProvisionSpecs.to_mongo().to_dict())
+#         legalProvisonSpecsStr = dict2string(legalProvisionSpecs.to_mongo().to_dict())
 
-        key = {"legalActKey": legalActKey, "legalProvisionSpecs": legalProvisionSpecs}
-        what = {"entity": "legalProvision", "key": key}
+#         key = {"legalActKey": legalActKey, "legalProvisionSpecs": legalProvisionSpecs}
+#         what = {"entity": "legalProvision", "key": key}
 
-        legalProvision = legal_provision.to_mongo().to_dict()
-        legal_provision.save()
+#         legalProvision = legal_provision.to_mongo().to_dict()
+#         legal_provision.save()
 
-        Change(action="create", who=who, what=what, change=legal_provision.to_mongo()).save()
+#         Change(action="create", who=who, what=what, change=legal_provision.to_mongo()).save()
 
-        return Response(
-            json.dumps(
-                {
-                    "message": f"Επιτυχής δημιουργία διάταξης από τη νομική πράξη <strong>{legalActKey} ({legalProvisonSpecsStr})</strong>",
-                    "legalProvision": legalProvision,
-                }
-            ),
-            mimetype="application/json",
-            status=201,
-        )
-    except NotUniqueError:
-        return Response(
-            json.dumps(
-                {"message": f"Υπάρχει ήδη διάταξη με κωδικό <strong>{legalActKey} ({legalProvisonSpecsStr})</strong>."}
-            ),
-            mimetype="application/json",
-            status=409,
-        )
-    except Exception as e:
-        print(e)
-        return Response(
-            json.dumps({"message": f"Αποτυχία δημιουργίας διάταξης: {e}"}), mimetype="application/json", status=500
-        )
+#         return Response(
+#             json.dumps(
+#                 {
+#                     "message": f"Επιτυχής δημιουργία διάταξης από τη νομική πράξη <strong>{legalActKey} ({legalProvisonSpecsStr})</strong>",
+#                     "legalProvision": legalProvision,
+#                 }
+#             ),
+#             mimetype="application/json",
+#             status=201,
+#         )
+#     except NotUniqueError:
+#         return Response(
+#             json.dumps(
+#                 {"message": f"Υπάρχει ήδη διάταξη με κωδικό <strong>{legalActKey} ({legalProvisonSpecsStr})</strong>."}
+#             ),
+#             mimetype="application/json",
+#             status=409,
+#         )
+#     except Exception as e:
+#         print(e)
+#         return Response(
+#             json.dumps({"message": f"Αποτυχία δημιουργίας διάταξης: {e}"}), mimetype="application/json", status=500
+#         )
 
 
-@legal_provision.route("", methods=["GET"])
-@jwt_required()
-def get_all_legal_provisions():
-    legal_provisions = LegalProvision.objects().order_by("legalActNumber", "legalActYear")
-    return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
+# @legal_provision.route("", methods=["GET"])
+# @jwt_required()
+# def get_all_legal_provisions():
+#     legal_provisions = LegalProvision.objects().order_by("legalActNumber", "legalActYear")
+#     return Response(legal_provisions.to_json(), mimetype="application/json", status=200)
 
 
 @legal_provision.route("/by_regulated_organization/<string:code>", methods=["GET"])
@@ -106,6 +107,21 @@ def get_legal_provision(code: str):
     #     return Response(
     #         json.dumps({"error": f"Δεν βρέθηκε διάταξη με κωδικό {id}"}), mimetype="application/json", status=404
     #     )
+
+
+@legal_provision.route("/delete", methods=["POST"])
+@jwt_required()
+@can_delete
+def delete_legal_provision():
+    data = request.get_json()
+
+    debug_print("DELETE LEGAL PROVISION", data)
+    code = data["code"]
+    legalActKey = data["provision"]["legalActKey"]
+    legalProvisionSpecs = data["provision"]["legalProvisionSpecs"]
+    # legal_provision = LegalProvision.objects.get(id=data["id"])
+    # legal_provision.delete()
+    return Response(json.dumps({"message": "Legal Provision Deleted"}), mimetype="application/json", status=201)
 
 
 # @legal_provision.route("/from_list_of_ids", methods=["POST"])

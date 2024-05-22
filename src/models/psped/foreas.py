@@ -58,6 +58,7 @@ class Foreas(me.Document):
         choices=["ΚΕΝΤΡΙΚΟ", "ΑΠΟΚΕΝΤΡΩΜΕΝΟ", "ΠΕΡΙΦΕΡΕΙΑΚΟ", "ΤΟΠΙΚΟ", "ΜΗ ΟΡΙΣΜΕΝΟ"],
         default="ΜΗ ΟΡΙΣΜΕΝΟ",
     )
+    provisionText = me.StringField()
     apografi = me.EmbeddedDocumentField(Apografi, required=True)
     tree = me.EmbeddedDocumentListField(TreeNode)
 
