@@ -29,7 +29,7 @@ def can_edit(f):
     return decorated_function
 
 
-def can_delete(f):
+def can_update_delete(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         claims = get_jwt()
