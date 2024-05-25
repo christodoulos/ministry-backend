@@ -2,8 +2,7 @@ import json
 from bson import ObjectId
 from flask import Blueprint, Response, request
 from flask_jwt_extended import get_jwt_identity, jwt_required, get_jwt
-from deepdiff import DeepDiff
-from mongoengine.errors import NotUniqueError
+
 
 from src.blueprints.utils import debug_print, dict2string
 from src.models.apografi.organization import Organization
@@ -16,7 +15,7 @@ from src.blueprints.decorators import can_edit
 psped = Blueprint("psped", __name__)
 
 
-@psped.route("/foreas/count")
+@psped.route("/foreas/count", methods=["GET"])
 def get_foreas_count():
     count = Foreas.objects.count()
     return Response(
@@ -26,12 +25,11 @@ def get_foreas_count():
     )
 
 
-@psped.route("/foreas/<string:code>")
+@psped.route("/foreas/<string:code>", methods=["GET"])
 def get_foreas(code: str):
     try:
         foreas = Foreas.objects.get(code=code)
         return Response(
-            # json.dumps(foreas.to_json()),
             foreas.to_json(),
             mimetype="application/json",
             status=200,
@@ -44,7 +42,7 @@ def get_foreas(code: str):
         )
 
 
-@psped.route("/organization/by-id/<string:id>")
+@psped.route("/organization/by-id/<string:id>", methods=["GET"])
 @jwt_required()
 def get_organization_by_id(id: str):
     foreas = Foreas.objects.get(id=ObjectId(id))
@@ -62,7 +60,7 @@ def get_organization_by_id(id: str):
         )
 
 
-@psped.route("/organization/by-code/<string:code>")
+@psped.route("/organization/by-code/<string:code>", methods=["GET"])
 @jwt_required()
 def get_organization_by_code(code: str):
     foreas = Foreas.objects.get(code=code)
@@ -87,24 +85,26 @@ def update_foreas(code: str):
     curr_change = {}
 
     organization = Organization.objects.get(code=code)
-    organization_name = organization.preferredLabel
-
-    success_message = f"<strong>Επιτυχής ενημέρωση του φορέα {organization_name}:</strong>&nbsp;"
-    error_message = f"<strong>Σφάλμα κατά την ενημέρωση του φορέα {organization_name}:</strong>&nbsp;"
 
     data = request.get_json()
     level = data["level"]
+    provisionText = data["provisionText"]
     legalProvisions = data["legalProvisions"]
     debug_print("UPDATE FOREAS", data)
 
     organization = Foreas.objects.get(code=code)
     existing_level = organization.level
+    existing_provisionText = organization.provisionText
 
     if level != existing_level:
         organization.level = level
         organization.save()
         curr_change["level"] = level
-        success_message += f"Ενημέρωση επιπέδου φορέα από {existing_level} σε {level}. "
+
+    if provisionText != existing_provisionText:
+        organization.provisionText = provisionText
+        organization.save()
+        curr_change["provisionText"] = provisionText
 
     regulatedObject = RegulatedObject(
         regulatedObjectType="organization",
@@ -126,7 +126,6 @@ def update_foreas(code: str):
         if existing:
             print("EXISTING LEGAL PROVISION FOUND")
             existing.update(legalProvisionText=legalProvisionText)
-            success_message += f"Ενημέρωση διάταξης {legalActKey} ({dict2string(legalProvisionSpecs)}). "
             legal_provisions_changes_updates.append(existing.to_mongo())
         else:
             print("NO EXISTING LEGAL PROVISION FOUND")
@@ -137,61 +136,12 @@ def update_foreas(code: str):
                 legalProvisionText=legalProvisionText,
             )
             legalProvision.save()
-            success_message += f"Προσθήκη διάταξης {legalActKey} ({dict2string(legalProvisionSpecs)}). "
             legal_provisions_changes_inserts.append(legalProvision.to_mongo())
-    # Find the existing legal provisions for the organization
-    # existing_legal_provision_docs = LegalProvision.objects(regulatedObject=regulatedObject)
-    # Find the  legal provisions from data["legalProvisions"] that are not included in the existing legal provisions
-
-    # existing_legal_provisions = [provision.to_json() for provision in existing_legal_provision_docs]
-    #     legalAct = LegalAct.objects.get(id=legalActRef)
-    #     legalActKey = legalAct.legalActKey
-    #     provision.legalActKey = legalActKey
-    # debug_print("EXISTING LEGAL PROVISIONS", existing_legal_provisions)
-    # new_legal_provisions = [provision for provision in legalProvisions if provision not in existing_legal_provisions]
-    # debug_print("NEW LEGAL PROVISIONS", new_legal_provisions)
-
-    # success_message += "Προσθήκη νέων διατάξεων: "
-    # legal_provisions_str = ""
-    # legal_provisions_changes = []
-    # for provision in new_legal_provisions:
-    #     legalProvisionSpecs = provision["legalProvisionSpecs"]
-    #     if not any(legalProvisionSpecs.values()):
-    #         return Response(
-    #             json.dumps({"message": f"{error_message}Κάποιο πεδίο της Διάταξης πρέπει να συμπληρωθεί"}),
-    #             mimetype="application/json",
-    #             status=400,
-    #         )
-    #     legalAct = LegalAct.objects.get(legalActKey=provision["legalActKey"])
-    #     legalProvision = LegalProvision(
-    #         regulatedObject=regulatedObject,
-    #         legalAct=legalAct,
-    #         legalProvisionSpecs=legalProvisionSpecs,
-    #         legalProvisionText=provision["legalProvisionText"],
-    #     )
-    #     try:
-    #         legalProvision.save()
-    #         legal_provisions_str += f"{provision['legalActKey']} ({dict2string(legalProvisionSpecs)}), "
-    #         legal_provisions_changes.append(legalProvision.to_mongo())
-    #     except NotUniqueError:
-    #         return Response(
-    #             json.dumps(
-    #                 {
-    #                     "message": f"{error_message}Υπάρχει ήδη διάταξη με κωδικό {provision['legalActKey']} ({dict2string(legalProvisionSpecs)})"
-    #                 }
-    #             ),
-    #             mimetype="application/json",
-    #             status=409,
-    #         )
 
     curr_change["legalProvisions"] = {
         "inserts": legal_provisions_changes_inserts,
         "updates": legal_provisions_changes_updates,
     }
-    # if len(legalProvisions) == 1:
-    #     success_message += f"Προσθήκη νέας διάταξης: {legal_provisions_str}"
-    # elif len(legalProvisions) > 1:
-    #     success_message += f"Προσθήκη νέων διατάξεων: {legal_provisions_str}"
 
     who = get_jwt_identity()
     what = {"entity": "organization", "key": {"code": code}}
@@ -203,60 +153,8 @@ def update_foreas(code: str):
         status=201,
     )
 
-    # existingProvisionDocs = LegalProvision.objects(regulatedObject=regulatedObject).exclude("id")
-    # existingProvisions = [provision.to_json() for provision in existingProvisionDocs]
 
-    # updates = {}
-
-    # newLegalProvisionDocs = []
-    # for provision in legalProvisions:
-    #     legalProvision = LegalProvision(
-    #         regulatedObject=regulatedObject,
-    #         legalActKey=provision["legalActKey"],
-    #         legalProvisionSpecs=provision["legalProvisionSpecs"],
-    #         legalProvisionText=provision["legalProvisionText"],
-    #     )
-    #     if legalProvision.to_json() not in existingProvisions:
-    #         newLegalProvisionDocs.append(legalProvision)
-
-    # if newLegalProvisionDocs:
-    #     updates["legalProvisions"] = [
-    #         provision
-    #         for provision in [x.to_mongo() for x in newLegalProvisionDocs]
-    #         + [x.to_mongo() for x in existingProvisionDocs]
-    #     ]
-    #     LegalProvision.objects.insert(newLegalProvisionDocs)
-
-    # foreas = Foreas.objects.get(code=foreas_code)
-    # if foreas.level != level:
-    #     updates["level"] = level
-    #     foreas.level = level
-    #     foreas.save()
-
-    # if updates:
-    #     what = {"entity": "organization", "key": {"code": foreas_code}}
-    #     Change(action="update", who=who, what=what, change=updates).save()
-
-    #     return Response(
-    #         json.dumps({"message": "<strong>Επιτυχής ενημέρωση του φορέα</strong>"}),
-    #         mimetype="application/json",
-    #         status=201,
-    #     )
-    # else:
-    #     return Response(
-    #         json.dumps({"message": "<strong>Δεν υπήρξε κάποια αλλαγή</strong>"}),
-    #         mimetype="application/json",
-    #         status=211,
-    #     )
-    # except Foreas.DoesNotExist:
-    #     return Response(
-    #         json.dumps({"error": f"Δεν βρέθηκε φορέας με κωδικό {code}"}),
-    #         mimetype="application/json",
-    #         status=404,
-    #     )
-
-
-@psped.route("/foreas/<string:code>/tree")
+@psped.route("/foreas/<string:code>/tree", methods=["GET"])
 def get_foreas_tree(code: str):
     try:
         foreas = Foreas.objects.get(code=code)
