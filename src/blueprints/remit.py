@@ -65,7 +65,7 @@ def create_remit():
 
         who = get_jwt_identity()
         what = {"entity": "remit", "key": {"organizationalUnitCode": organizationalUnitCode}}
-        Change(action="insert", who=who, what=what, change=curr_change).save()
+        Change(action="create", who=who, what=what, change=curr_change).save()
 
         newRemit.legalProvisionRefs = legal_provisions_docs
         newRemit.save()
