@@ -26,4 +26,4 @@ class Remit(me.Document):
     )
     cofog = me.EmbeddedDocumentField(COFOG, required=True)
     status = me.StringField(choices=["ΕΝΕΡΓΗ", "ΑΝΕΝΕΡΓΗ"], default="ΕΝΕΡΓΗ")
-    legalProvisionRefs = me.ListField(me.ReferenceField(LegalProvision), required=True)
+    legalProvisionRefs = me.ListField(me.ReferenceField(LegalProvision))

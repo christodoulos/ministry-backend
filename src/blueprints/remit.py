@@ -1,10 +1,13 @@
 from flask import Blueprint, Response, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
+from src.models.psped.legal_act import LegalAct
 from src.models.psped.remit import Remit
-from src.models.psped.legal_provision import LegalProvision
+from src.models.psped.legal_provision import LegalProvision, RegulatedObject
 from src.models.psped.change import Change
 import json
+
+from .utils import debug_print
 
 remit = Blueprint("remit", __name__)
 
@@ -12,91 +15,66 @@ remit = Blueprint("remit", __name__)
 @remit.route("", methods=["POST"])
 @jwt_required()
 def create_remit():
-    who = get_jwt_identity()
-    what = "remit"
-
+    curr_change = {}
     try:
         data = request.get_json()
 
-        regulatedObject = data["regulatedObject"]
+        debug_print("POST REMIT", data)
+
+        # regulatedObject = data["regulatedObject"]
+        organizationalUnitCode = data["regulatedObject"]["regulatedObjectCode"]
+        remitText = data["remitText"]
         remitType = data["remitType"]
         cofog = data["cofog"]
-        remitText = data["remitText"]
-        legalProvisions = data["legalProvisions"]
 
-        print(regulatedObject)
-        print(remitType)
-        print(cofog)
-        print(remitText)
-        print(legalProvisions)
-
-        # existingProvisionDocs = LegalProvision.objects(regulatedObject=regulatedObject).exclude("id")
-        # existingProvisions = [provision.to_json() for provision in existingProvisionDocs]
-
-        # print(existingProvisions)
-
-        # updates = {}
-
-        # newLegalProvisionDocs = []
-        # for provision in legalProvisions:
-        #     legalProvision = LegalProvision(
-        #         regulatedObject=regulatedObject,
-        #         legalActKey=provision["legalActKey"],
-        #         legalProvisionSpecs=provision["legalProvisionSpecs"],
-        #         legalProvisionText=provision["legalProvisionText"],
-        #     )
-        #     if legalProvision.to_json() not in existingProvisions:
-        #         newLegalProvisionDocs.append(legalProvision)
-
-        # print(newLegalProvisionDocs)
-
-        # if newLegalProvisionDocs:
-        #     updates["legalProvisions"] = [
-        #         provision
-        #         for provision in [x.to_mongo() for x in newLegalProvisionDocs]
-        #         + [x.to_mongo() for x in existingProvisionDocs]
-        #     ]
-        #     LegalProvision.objects.insert(newLegalProvisionDocs)
-
-        legalProvisionDocs = []
-        for provision in legalProvisions:
-            legalProvision = LegalProvision(
-                regulatedObject=regulatedObject,
-                legalActKey=provision["legalActKey"],
-                legalProvisionSpecs=provision["legalProvisionSpecs"],
-                legalProvisionText=provision["legalProvisionText"],
-            )
-            legalProvisionDocs.append(legalProvision)
-
-        legalProvisionRefs = LegalProvision.objects.insert(legalProvisionDocs)
-
-        organizationalUnitCode = regulatedObject["regulatedObjectCode"]
-
-        remit = Remit(
+        newRemit = Remit(
             organizationalUnitCode=organizationalUnitCode,
             remitText=remitText,
             remitType=remitType,
             cofog=cofog,
-            legalProvisionRefs=legalProvisionRefs,
+        ).save()
+
+        newRemitID = newRemit.id
+        regulatedObject = RegulatedObject(
+            regulatedObjectType="remit",
+            regulatedObjectId=newRemitID,
         )
 
-        remit.save()
+        legalProvisions = data["legalProvisions"]
+        legal_provisions_changes_inserts = []
+        legal_provisions_docs = []
+        for provision in legalProvisions:
+            legalActKey = provision["legalActKey"]
+            legalAct = LegalAct.objects.get(legalActKey=legalActKey)
+            legalProvisionSpecs = provision["legalProvisionSpecs"]
+            legalProvisionText = provision["legalProvisionText"]
 
-        return Response(json.dumps({"message": "Άντε να δούμε!"}), mimetype="application/json", status=201)
+            legalProvision = LegalProvision(
+                regulatedObject=regulatedObject,
+                legalAct=legalAct,
+                legalProvisionSpecs=legalProvisionSpecs,
+                legalProvisionText=legalProvisionText,
+            ).save()
+            legal_provisions_docs.append(legalProvision)
+            legal_provisions_changes_inserts.append(legalProvision.to_mongo())
 
-    # legalProvisions = [
-    #     (legalProvision["legalActKey"], legalProvision["legalProvisionSpecs"])
-    #     for legalProvision in data["legalProvisions"]
-    # ]
-    # legalProvisionRefs = [
-    #     LegalProvision.objects.get(legalActKey=legalActKey, legalProvisionSpecs=legalProvisionSpecs)
-    #     for legalActKey, legalProvisionSpecs in legalProvisions
-    # ]
-    # del data["legalProvisions"]
-    # remit = Remit(**data, legalProvisionRefs=legalProvisionRefs)
-    # remit.save()
-    # Change(action="create", who=who, what=what, change=remit.to_mongo()).save()
-    # return Response(remit.to_json(), mimetype="application/json", status=200)
+        curr_change["legalProvisions"] = {
+            "inserts": legal_provisions_changes_inserts,
+            # "updates": legal_provisions_changes_updates,
+        }
+
+        who = get_jwt_identity()
+        what = {"entity": "remit", "key": {"organizationalUnitCode": organizationalUnitCode}}
+        Change(action="insert", who=who, what=what, change=curr_change).save()
+
+        newRemit.legalProvisionRefs = legal_provisions_docs
+        newRemit.save()
+
+        return Response(
+            json.dumps({"message": "Η αρμοδιότητα δημιουργήθηκε με επιτυχία"}),
+            mimetype="application/json",
+            status=201,
+        )
 
     except Exception as e:
         print(e)
@@ -125,149 +103,57 @@ def count_all_remits():
     return Response(json.dumps({"count": count}), mimetype="application/json", status=201)
 
 
-# @remit.route("/remit", methods=["POST"])
-# def create_remit():
-#     try:
-#         # Assume data contains all required fields except those that are auto-generated (shouldnt we check that?)
-#         data = request.get_json()
-#         # check if organization unit code exists
-#         try:
-#             unitcode = OrganizationalUnit.objects.get(code=data["unitCode"])
-#         except OrganizationalUnit.DoesNotExist:
-#             return Response(
-#                 json.dumps({"error": f"Δεν βρέθηκε μονάδα με κωδικό {data['unitCode']}"}),
-#                 mimetype="application/json",
-#                 status=404,
-#             )
-#         # check if diataxeis codes exists
-#         for diataxi_code in data["diataxisCodes"]:
-#             try:
-#                 diataxi = LegalProvision.objects.get(legalProvisionCode=diataxi_code)
-#             except LegalProvision.DoesNotExist:
-#                 return Response(
-#                     json.dumps({"error": f"Δεν βρέθηκε νομική διάταξη με κωδικό {diataxi_code}"}),
-#                     mimetype="application/json",
-#                     status=404,
-#                 )
-#         # create remit code
-#         data["remitCode"] = Remit.generate_remit_code()
-#         # create a remit & save it
-#         remit = Remit(**data)
-#         remit.save()
-#         return Response(remit.to_json(), mimetype="application/json", status=200)
+@remit.route("/by_code/<string:code>", methods=["GET"])
+@jwt_required()
+def retrieve_remit_by_code(code):
+    # print(code)
+    remits = Remit.objects(organizationalUnitCode=code).exclude("id")
+    # debug_print("GET REMIT BY CODE", remits.to_json())
 
-#     except Exception as e:
-#         return Response(
-#             json.dumps({"error": f"Αποτυχία δημιουργίας αρμοδιότητας: {e}"}),
-#             mimetype="application/json",
-#             status=500,
-#         )
+    remitsToReturn = []
+    for remit in remits:
+        # print(remit.to_json())
+        data = {
+            "organizationalUnitCode": remit.organizationalUnitCode,
+            "remitText": remit.remitText,
+            "remitType": remit.remitType,
+            "cofog": remit.cofog.to_mongo().to_dict(),
+            "legalProvisions": [],
+        }
+        # legal_provisions = [provision.to_dict() for provision in remit.legalProvisionRefs]
+        legal_provisions = [provision for provision in remit.legalProvisionRefs]
 
+        for provision in legal_provisions:
+            legalActRef = provision["legalAct"]
+            legalActKey = legalActRef.legalActKey
+            legalProvisionSpecs = provision["legalProvisionSpecs"].to_mongo().to_dict()
+            legalProvisionText = provision["legalProvisionText"]
+            data["legalProvisions"].append(
+                {
+                    "legalActKey": legalActKey,
+                    "legalProvisionSpecs": legalProvisionSpecs,
+                    "legalProvisionText": legalProvisionText,
+                }
+            )
 
-# @remit.route("/remits/", methods=["GET"])
-# def retrieve_all_remit():
-#     remits = Remit.objects()
-#     return Response(
-#         remits.to_json(),
-#         mimetype="application/json",
-#         status=200,
-#     )
+            # legalAct = LegalAct.objects.get(id=legalActRef)
+            # legalActKey = legalAct.legalActKey
+            # legalProvisionSpecs = provision["legalProvisionSpecs"]
+            # legalProvisionText = provision["legalProvisionText"]
+            # data["legalProvisions"].append(
+            #     {
+            #         "legalActKey": legalActKey,
+            #         "legalProvisionSpecs": legalProvisionSpecs,
+            #         "legalProvisionText": legalProvisionText,
+            #     }
+            # )
 
+        remitsToReturn.append(data)
 
-# @remit.route("/remits/<string:remitCode>", methods=["GET"])
-# def retrieve_armodiotita(remitCode: str):
-#     try:
-#         remit = Remit.objects.get(remitCode=remitCode)
-#         return Response(
-#             remit.to_json(),
-#             mimetype="application/json",
-#             status=200,
-#         )
-#     except Remit.DoesNotExist:
-#         return Response(
-#             json.dumps({"error": (f"Δεν βρέθηκε αρμοδιότητα με κωδικό {remitCode}")}),
-#             mimetype="application/json",
-#             status=404,
-#         )
+    # print(remitsToReurn)
 
-
-# @remit.route("/remits/<string:remitCode>", methods=["PUT"])
-# def update_remit(remitCode: str):
-#     data = request.get_json()
-#     try:
-#         remit = Remit.objects.get(remitCode=remitCode)
-#     except Remit.DoesNotExist:
-#         return Response(
-#             json.dumps({"error": f"Δεν βρέθηκε αρμοδιότητα με κωδικό {remitCode}"}),
-#             mimetype="application/json",
-#             status=404,
-#         )
-
-#     # check for the immutable fields
-#     immutable_fields: list = ["remitCode", "creationDate", "userCode"]
-#     update_fields = data.keys()
-
-#     if any(field in update_fields for field in immutable_fields):
-#         return Response(
-#             json.dumps({"error": "Μη επιτρεπτή ενημέρωση πεδίων: remitCode, creationDate, userCode"}),
-#             mimetype="application/json",
-#             status=400,
-#         )
-
-#     # check that Organization unit code exists
-#     unit_code = data.get("unitCode")
-#     if unit_code:
-#         try:
-#             org_unit = OrganizationalUnit.objects.get(code=unit_code)
-#         except OrganizationalUnit.DoesNotExist:
-#             return Response(
-#                 json.dumps({"error": f"Δεν βρέθηκε Μονάδα με κωδικό {unit_code}"}),
-#                 mimetype="application/json",
-#                 status=404,
-#             )
-
-#     # check that diataxeis codes exist
-#     diataxis_codes = data.get("diataxisCodes")
-#     if diataxis_codes:
-#         for code in diataxis_codes:
-#             try:
-#                 diataxi = LegalProvision.objects.get(legalProvisionCode=code)
-#             except LegalProvision.DoesNotExist:
-#                 return Response(
-#                     json.dumps({"error": f"Δεν βρέθηκε νομική διάταξη με κωδικό {code}"}),
-#                     mimetype="application/json",
-#                     status=404,
-#                 )
-
-#     # Manually update each field
-#     try:
-#         for key, value in data.items():
-#             if hasattr(remit, key):
-#                 setattr(remit, key, value)
-
-#         remit.save()  # This will now perform validation and other logic
-#         return Response(remit.to_json(), mimetype="application/json", status=200)
-#     except Exception as e:
-#         return Response(
-#             json.dumps({"error": f"Αποτυχία ενημέρωσης αρμοδιότητας: {e}"}),
-#             mimetype="application/json",
-#             status=500,
-#         )
-
-
-# @remit.route("/remits/<string:remitCode>", methods=["DELETE"])
-# def delete_remit(remitCode: str):
-#     try:
-#         remit = Remit.objects.get(remitCode=remitCode)
-#         remit.detele()
-#         return Response(
-#             json.dumps({"success": f"Η αρμοδιότητα με τον κωδικό {remitCode} διαγράφηκε"}),
-#             mimetype="application/json",
-#             status=200,
-#         )
-#     except Remit.DoesNotExist:
-#         return Response(
-#             json.dumps({"error": f"Δεν βρέθηκε αρμοδιότητα με τον κωδικό: {remitCode}"}),
-#             mimetype="application/json",
-#             status=404,
-#         )
+    return Response(
+        json.dumps(remitsToReturn),
+        mimetype="application/json",
+        status=200,
+    )
