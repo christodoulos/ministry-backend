@@ -13,7 +13,7 @@ legal_act = Blueprint("legal_act", __name__)
 
 @legal_act.route("", methods=["POST"])
 @jwt_required()
-def create_legalact():
+def create_legal_act():
     who = get_jwt_identity()
     try:
         data = request.get_json()
@@ -35,14 +35,16 @@ def create_legalact():
         )
     except NotUniqueError:
         return Response(
-            json.dumps({"message": f"Υπάρχει ήδη νομική πράξη με κωδικό <strong>{legalAct.key2str}</strong>."}),
+            json.dumps({"message": "Απόπειρα δημιουργίας διπλοεγγραφής."}),
             mimetype="application/json",
             status=409,
         )
     except Exception as e:
-        print("create_lagalact(): ERROR in legal_act.py blueprint:", e)
+        print(e)
         return Response(
-            json.dumps({"message": f"Αποτυχία δημιουργίας νομικής πράξης: {e}"}),
+            json.dumps({"message": "Απόπειρα δημιουργίας διπλοεγγραφής."})
+            if "duplicate key error" in str(e)
+            else json.dumps({"message": f"Αποτυχία ενημέρωσης νομικής πράξης: {e}"}),
             mimetype="application/json",
             status=500,
         )
@@ -85,33 +87,18 @@ def update_legalact(id):
         # Save the change in the database
         Change(action="update", who=who, what=what, change=updatedLegalAct).save()
 
-        if legalActKey == foundLegalActKey:
-            return Response(
-                json.dumps({"message": f"Επιτυχής ενημέρωση νομικής πράξης <strong>{legalActKey}</strong>"}),
-                mimetype="application/json",
-                status=201,
-            )
-        else:
-            return Response(
-                json.dumps(
-                    {
-                        "message": f"Επιτυχής ενημέρωση νομικής πράξης <strong>{foundLegalActKey}</strong> σε <strong>{legalActKey}</strong>"
-                    }
-                ),
-                mimetype="application/json",
-                status=201,
-            )
-
-    except LegalAct.DoesNotExist:
         return Response(
-            json.dumps({"message": f"Νομική πράξη με id {id} δεν βρέθηκε"}),
+            json.dumps({"message": "Επιτυχής ενημέρωση νομικής πράξης."}),
             mimetype="application/json",
-            status=404,
+            status=201,
         )
+
     except Exception as e:
         print(e)
         return Response(
-            json.dumps({"message": f"Αποτυχία ενημέρωσης νομικής πράξης: {e}"}),
+            json.dumps({"message": "Απόπειρα δημιουργίας διπλοεγγραφής."})
+            if "duplicate key error" in str(e)
+            else json.dumps({"message": f"Αποτυχία ενημέρωσης νομικής πράξης: {e}"}),
             mimetype="application/json",
             status=500,
         )
