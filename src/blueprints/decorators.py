@@ -36,12 +36,12 @@ def can_update_delete(f):
 
         user_roles = claims["roles"]
         roles = [x for x in user_roles if x["role"] in ["EDITOR", "ADMIN", "ROOT"]]
-        # print(">>>>>> ROLES >>", roles)
+        print(">>>>>> ROLES >>", roles)
         all_codes = [code for entry in roles for code_list in (entry["foreas"], entry["monades"]) for code in code_list]
-        # print(">>>>>> ALL CODES >>", all_codes)
+        print(">>>>>> ALL CODES >>", all_codes)
         data = request.get_json()
         code = data.get("code", "")
-        # print(">>>>>> CODE >>", code)
+        print(">>>>>> CODE >>", code)
 
         if code not in all_codes:
             return Response(

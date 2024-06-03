@@ -1,6 +1,7 @@
 from flask import Blueprint, request, Response
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from src.models.psped.foreas import Foreas
+from src.models.apografi.organizational_unit import OrganizationalUnit as Monada
 from src.models.psped.legal_act import LegalAct
 from src.models.psped.legal_provision import LegalProvision, RegulatedObject
 from src.models.psped.change import Change
@@ -120,11 +121,18 @@ def update_legal_provision():
     legalProvisionType = data["provisionType"]
     currentProvision = data["currentProvision"]
     updatedProvision = data["updatedProvision"]
-    foreas = Foreas.objects.get(code=code)
-    regulatedObject = RegulatedObject(
-        regulatedObjectType=legalProvisionType,
-        regulatedObjectId=foreas.id,
-    )
+    try:
+        foreas = Foreas.objects.get(code=code)
+        regulatedObject = RegulatedObject(
+            regulatedObjectType=legalProvisionType,
+            regulatedObjectId=foreas.id,
+        )
+    except Exception:
+        monada = Monada.objects.get(code=code)
+        regulatedObject = RegulatedObject(
+            regulatedObjectType=legalProvisionType,
+            regulatedObjectId=monada.id,
+        )
 
     # Will delete the current provision and insert the updated one
     legalActKey = currentProvision["legalActKey"]

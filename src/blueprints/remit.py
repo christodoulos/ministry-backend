@@ -107,13 +107,14 @@ def count_all_remits():
 @jwt_required()
 def retrieve_remit_by_code(code):
     # print(code)
-    remits = Remit.objects(organizationalUnitCode=code).exclude("id")
-    # debug_print("GET REMIT BY CODE", remits.to_json())
+    remits = Remit.objects(organizationalUnitCode=code)
+    debug_print("GET REMIT BY CODE", remits.to_json())
 
     remitsToReturn = []
     for remit in remits:
         # print(remit.to_json())
         data = {
+            "_id": {"$oid": str(remit.id)},
             "organizationalUnitCode": remit.organizationalUnitCode,
             "remitText": remit.remitText,
             "remitType": remit.remitType,
@@ -122,31 +123,24 @@ def retrieve_remit_by_code(code):
         }
         # legal_provisions = [provision.to_dict() for provision in remit.legalProvisionRefs]
         legal_provisions = [provision for provision in remit.legalProvisionRefs]
+        # print(legal_provisions)
 
         for provision in legal_provisions:
-            legalActRef = provision["legalAct"]
+            print(">>>>>>>>>>", provision.to_json())
+            # legalActRef = provision["legalAct"]
+
+            legalActRef = provision.legalAct
             legalActKey = legalActRef.legalActKey
             legalProvisionSpecs = provision["legalProvisionSpecs"].to_mongo().to_dict()
             legalProvisionText = provision["legalProvisionText"]
             data["legalProvisions"].append(
                 {
+                    "_id": {"$oid": str(provision.id)},
                     "legalActKey": legalActKey,
                     "legalProvisionSpecs": legalProvisionSpecs,
                     "legalProvisionText": legalProvisionText,
                 }
             )
-
-            # legalAct = LegalAct.objects.get(id=legalActRef)
-            # legalActKey = legalAct.legalActKey
-            # legalProvisionSpecs = provision["legalProvisionSpecs"]
-            # legalProvisionText = provision["legalProvisionText"]
-            # data["legalProvisions"].append(
-            #     {
-            #         "legalActKey": legalActKey,
-            #         "legalProvisionSpecs": legalProvisionSpecs,
-            #         "legalProvisionText": legalProvisionText,
-            #     }
-            # )
 
         remitsToReturn.append(data)
 
