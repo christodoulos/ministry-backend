@@ -1,6 +1,7 @@
 from flask import Blueprint, request, Response
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from src.models.psped.foreas import Foreas
+from src.models.psped.remit import Remit
 from src.models.apografi.organizational_unit import OrganizationalUnit as Monada
 from src.models.psped.legal_act import LegalAct
 from src.models.psped.legal_provision import LegalProvision, RegulatedObject
@@ -8,6 +9,7 @@ from src.models.psped.change import Change
 from .utils import debug_print
 import json
 from src.blueprints.decorators import can_update_delete
+from bson import ObjectId
 
 
 legal_provision = Blueprint("legal_provision", __name__)
@@ -76,11 +78,7 @@ def delete_legal_provision():
 
     if not legalProvision:
         return Response(
-            json.dumps(
-                {
-                    "message": "Η διάταξη δεν είχε αποθηκευτεί στη βάση δεδομένων. Απλά διαγράφηκε από την λίστα που εμφανίζεται."
-                }
-            ),
+            json.dumps({"message": "Η διάταξη δεν είχε αποθηκευτεί στη βάση δεδομένων. Απλά διαγράφηκε από την λίστα που εμφανίζεται."}),
             mimetype="application/json",
             status=201,
         )
@@ -100,14 +98,10 @@ def delete_legal_provision():
             },
         }
         Change(action="delete", who=who, what=what, change=legalProvision.to_mongo()).save()
-        return Response(
-            json.dumps({"message": "<strong>H διάταξη διαγράφηκε</strong>"}), mimetype="application/json", status=201
-        )
+        return Response(json.dumps({"message": "<strong>H διάταξη διαγράφηκε</strong>"}), mimetype="application/json", status=201)
     except Exception as e:
         print(e)
-        return Response(
-            json.dumps({"message": f"<strong>Error:</strong> {str(e)}"}), mimetype="application/json", status=500
-        )
+        return Response(json.dumps({"message": f"<strong>Error:</strong> {str(e)}"}), mimetype="application/json", status=500)
 
 
 @legal_provision.route("/update", methods=["POST"])
@@ -118,21 +112,42 @@ def update_legal_provision():
     debug_print("UPDATE LEGAL PROVISION", data)
 
     code = data["code"]
+    if data["remitID"]:
+        remitID = ObjectId(data["remitID"])
     legalProvisionType = data["provisionType"]
     currentProvision = data["currentProvision"]
     updatedProvision = data["updatedProvision"]
-    try:
+
+    if legalProvisionType == "organization":
         foreas = Foreas.objects.get(code=code)
         regulatedObject = RegulatedObject(
             regulatedObjectType=legalProvisionType,
             regulatedObjectId=foreas.id,
         )
-    except Exception:
+    elif legalProvisionType == "organizationalUnit":
         monada = Monada.objects.get(code=code)
         regulatedObject = RegulatedObject(
             regulatedObjectType=legalProvisionType,
             regulatedObjectId=monada.id,
         )
+    else:  # legalProvisionType == "remit"
+        regulatedObject = RegulatedObject(
+            regulatedObjectType=legalProvisionType,
+            regulatedObjectId=remitID,
+        )
+
+    # try:
+    #     foreas = Foreas.objects.get(code=code)
+    #     regulatedObject = RegulatedObject(
+    #         regulatedObjectType=legalProvisionType,
+    #         regulatedObjectId=foreas.id,
+    #     )
+    # except Exception:
+    #     monada = Monada.objects.get(code=code)
+    #     regulatedObject = RegulatedObject(
+    #         regulatedObjectType=legalProvisionType,
+    #         regulatedObjectId=monada.id,
+    #     )
 
     # Will delete the current provision and insert the updated one
     legalActKey = currentProvision["legalActKey"]
@@ -144,11 +159,7 @@ def update_legal_provision():
 
     if not existing_legal_provision:
         return Response(
-            json.dumps(
-                {
-                    "message": "Η διάταξη δεν είχε αποθηκευτεί στη βάση δεδομένων. Απλά διαγράφηκε από την λίστα που εμφανίζεται."
-                }
-            ),
+            json.dumps({"message": "Η διάταξη δεν είχε αποθηκευτεί στη βάση δεδομένων. Απλά διαγράφηκε από την λίστα που εμφανίζεται."}),
             mimetype="application/json",
             status=201,
         )
@@ -199,9 +210,7 @@ def update_legal_provision():
         )
     except Exception as e:
         print(e)
-        return Response(
-            json.dumps({"message": f"<strong>Error:</strong> {str(e)}"}), mimetype="application/json", status=500
-        )
+        return Response(json.dumps({"message": f"<strong>Error:</strong> {str(e)}"}), mimetype="application/json", status=500)
 
 
 @legal_provision.route("/count", methods=["GET"])

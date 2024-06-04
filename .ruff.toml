@@ -2,7 +2,7 @@
 exclude = [".git", ".venv", "dist", "node_modules"]
 
 # Set line length and indent width
-line-length = 120
+line-length = 140
 indent-width = 4
 
 [lint]

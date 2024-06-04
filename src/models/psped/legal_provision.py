@@ -35,9 +35,7 @@ class LegalProvision(me.Document):
         "db_alias": "psped",
     }
 
-    regulatedObject = me.EmbeddedDocumentField(
-        RegulatedObject, required=True, unique_with=["legalAct", "legalProvisionSpecs"]
-    )
+    regulatedObject = me.EmbeddedDocumentField(RegulatedObject, required=True, unique_with=["legalAct", "legalProvisionSpecs"])
     legalAct = me.ReferenceField(LegalAct, required=True)
     legalProvisionSpecs = me.EmbeddedDocumentField(LegalProvisionSpecs, required=True)
     legalProvisionText = me.StringField(required=True)
@@ -62,3 +60,23 @@ class LegalProvision(me.Document):
 
     def to_dict(self):
         return self.to_mongo().to_dict()
+
+    # A static method that receives an array of new legal provisions and saves them to the database
+    @staticmethod
+    def save_new_legal_provisions(legal_provisions, regulatedObject):
+        legal_provisions_docs = []
+        for provision in legal_provisions:
+            legalActKey = provision["legalActKey"]
+            legalAct = LegalAct.objects.get(legalActKey=legalActKey)
+            legalProvisionSpecs = provision["legalProvisionSpecs"]
+            legalProvisionText = provision["legalProvisionText"]
+
+            legalProvision = LegalProvision(
+                regulatedObject=regulatedObject,
+                legalAct=legalAct,
+                legalProvisionSpecs=legalProvisionSpecs,
+                legalProvisionText=legalProvisionText,
+            ).save()
+            legal_provisions_docs.append(legalProvision)
+
+        return legal_provisions_docs

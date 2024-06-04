@@ -1,3 +1,4 @@
+from bson import ObjectId
 from flask import Blueprint, Response, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
@@ -5,6 +6,7 @@ from src.models.psped.legal_act import LegalAct
 from src.models.psped.remit import Remit
 from src.models.psped.legal_provision import LegalProvision, RegulatedObject
 from src.models.psped.change import Change
+from src.blueprints.decorators import can_edit
 import json
 
 from .utils import debug_print
@@ -18,11 +20,9 @@ def create_remit():
     curr_change = {}
     try:
         data = request.get_json()
-
         debug_print("POST REMIT", data)
 
-        # regulatedObject = data["regulatedObject"]
-        organizationalUnitCode = data["regulatedObject"]["regulatedObjectCode"]
+        organizationalUnitCode = data["organizationalUnitCode"]
         remitText = data["remitText"]
         remitType = data["remitType"]
         cofog = data["cofog"]
@@ -85,6 +85,53 @@ def create_remit():
         )
 
 
+@remit.route("", methods=["PUT"])
+@jwt_required()
+def update_remit():
+    curr_change = {}
+    try:
+        data = request.get_json()
+        debug_print("UPDATE REMIT", data)
+
+        remitID = ObjectId(data["_id"]["$oid"])
+        organizationalUnitCode = data["organizationalUnitCode"]
+        remitText = data["remitText"]
+        remitType = data["remitType"]
+        cofog = data["cofog"]
+        legalProvisions = data["legalProvisions"]
+        regulatedObject = RegulatedObject(
+            regulatedObjectType="remit",
+            regulatedObjectId=remitID,
+        )
+        legalProvisionDocs = LegalProvision.save_new_legal_provisions(legalProvisions, regulatedObject)
+
+        remit = Remit.objects.get(id=remitID)
+        print("REMIT", remit.to_json())
+        existingLegalProvisions = remit.legalProvisionRefs
+        updatedLegalProvisions = existingLegalProvisions + legalProvisionDocs
+        remit.update(
+            organizationalUnitCode=organizationalUnitCode,
+            remitText=remitText,
+            remitType=remitType,
+            cofog=cofog,
+            legalProvisionRefs=updatedLegalProvisions,
+        )
+
+        return Response(
+            json.dumps({"message": "Η αρμοδιότητα ενημερώθηκε με επιτυχία"}),
+            mimetype="application/json",
+            status=201,
+        )
+
+    except Exception as e:
+        print(e)
+        return Response(
+            json.dumps({"message": f"<strong>Αποτυχία ενημέρωσης αρμοδιότητας:</strong> {e}"}),
+            mimetype="application/json",
+            status=500,
+        )
+
+
 @remit.route("", methods=["GET"])
 @jwt_required()
 def retrieve_all_remit():
@@ -123,10 +170,10 @@ def retrieve_remit_by_code(code):
         }
         # legal_provisions = [provision.to_dict() for provision in remit.legalProvisionRefs]
         legal_provisions = [provision for provision in remit.legalProvisionRefs]
-        # print(legal_provisions)
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAA", legal_provisions)
 
         for provision in legal_provisions:
-            print(">>>>>>>>>>", provision.to_json())
+            # print(">>>>>>>>>>", provision.to_json())
             # legalActRef = provision["legalAct"]
 
             legalActRef = provision.legalAct
