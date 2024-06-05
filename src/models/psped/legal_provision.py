@@ -1,5 +1,7 @@
 import mongoengine as me
-from src.models.psped.legal_act import LegalAct, FEK
+from src.models.psped.foreas import Foreas
+from src.models.psped.legal_act import LegalAct
+from src.models.apografi.organizational_unit import OrganizationalUnit as Monada
 
 
 class RegulatedObject(me.EmbeddedDocument):
@@ -40,26 +42,6 @@ class LegalProvision(me.Document):
     legalProvisionSpecs = me.EmbeddedDocumentField(LegalProvisionSpecs, required=True)
     legalProvisionText = me.StringField(required=True)
     abolition = me.EmbeddedDocumentField(Abolition)
-    # The following fields are populated from LegalAct on save
-    # legalActType = me.StringField()
-    # legalActNumber = me.StringField()
-    # legalActTypeOther = me.StringField()
-    # legalActYear = me.StringField()
-    # ada = me.StringField()
-    # fek = me.EmbeddedDocumentField(FEK)
-
-    # def save(self, *args, **kwargs):
-    #     legalActRef = LegalAct.objects.get(legalActKey=self.legalActKey)
-    #     self.legalActType = legalActRef.legalActType
-    #     self.legalActNumber = legalActRef.legalActNumber
-    #     self.legalActTypeOther = legalActRef.legalActTypeOther
-    #     self.legalActYear = legalActRef.legalActYear
-    #     self.ada = legalActRef.ada
-    #     self.fek = legalActRef.fek
-    #     super(LegalProvision, self).save(*args, **kwargs)
-
-    def to_dict(self):
-        return self.to_mongo().to_dict()
 
     # A static method that receives an array of new legal provisions and saves them to the database
     @staticmethod
@@ -80,3 +62,16 @@ class LegalProvision(me.Document):
             legal_provisions_docs.append(legalProvision)
 
         return legal_provisions_docs
+
+    @staticmethod
+    def regulated_object(code, legalProvisionType):
+        if legalProvisionType == "organization":
+            foreas = Foreas.objects.get(code=code)
+            return RegulatedObject(regulatedObjectType=legalProvisionType, regulatedObjectId=foreas.id)
+        elif legalProvisionType == "organizationUnit":
+            monada = Monada.objects.get(code=code)
+            return RegulatedObject(regulatedObjectType=legalProvisionType, regulatedObjectId=monada.id)
+        elif legalProvisionType == "remit":
+            return RegulatedObject(regulatedObjectType=legalProvisionType, regulatedObjectId=code)
+        else:
+            raise ValueError("Invalid legalProvisionType")

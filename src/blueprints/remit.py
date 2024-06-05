@@ -26,6 +26,7 @@ def create_remit():
         remitText = data["remitText"]
         remitType = data["remitType"]
         cofog = data["cofog"]
+        legalProvisions = data["legalProvisions"]
 
         newRemit = Remit(
             organizationalUnitCode=organizationalUnitCode,
@@ -40,27 +41,13 @@ def create_remit():
             regulatedObjectId=newRemitID,
         )
 
-        legalProvisions = data["legalProvisions"]
         legal_provisions_changes_inserts = []
-        legal_provisions_docs = []
-        for provision in legalProvisions:
-            legalActKey = provision["legalActKey"]
-            legalAct = LegalAct.objects.get(legalActKey=legalActKey)
-            legalProvisionSpecs = provision["legalProvisionSpecs"]
-            legalProvisionText = provision["legalProvisionText"]
 
-            legalProvision = LegalProvision(
-                regulatedObject=regulatedObject,
-                legalAct=legalAct,
-                legalProvisionSpecs=legalProvisionSpecs,
-                legalProvisionText=legalProvisionText,
-            ).save()
-            legal_provisions_docs.append(legalProvision)
-            legal_provisions_changes_inserts.append(legalProvision.to_mongo())
+        legal_provisions_docs = LegalProvision.save_new_legal_provisions(legalProvisions, regulatedObject)
+        legal_provisions_changes_inserts = [provision.to_mongo() for provision in legal_provisions_docs]
 
         curr_change["legalProvisions"] = {
             "inserts": legal_provisions_changes_inserts,
-            # "updates": legal_provisions_changes_updates,
         }
 
         who = get_jwt_identity()
@@ -106,9 +93,9 @@ def update_remit():
         legalProvisionDocs = LegalProvision.save_new_legal_provisions(legalProvisions, regulatedObject)
 
         remit = Remit.objects.get(id=remitID)
-        print("REMIT", remit.to_json())
         existingLegalProvisions = remit.legalProvisionRefs
         updatedLegalProvisions = existingLegalProvisions + legalProvisionDocs
+
         remit.update(
             organizationalUnitCode=organizationalUnitCode,
             remitText=remitText,
@@ -117,6 +104,26 @@ def update_remit():
             legalProvisionRefs=updatedLegalProvisions,
         )
 
+        curr_change = {
+            "old": {
+                "organizationalUnitCode": remit.organizationalUnitCode,
+                "remitText": remit.remitText,
+                "remitType": remit.remitType,
+                "cofog": remit.cofog.to_mongo().to_dict(),
+                "legalProvisions": [provision.to_mongo().to_dict() for provision in existingLegalProvisions],
+            },
+            "new": {
+                "organizationalUnitCode": organizationalUnitCode,
+                "remitText": remitText,
+                "remitType": remitType,
+                "cofog": cofog,
+                "legalProvisions": [provision.to_mongo().to_dict() for provision in updatedLegalProvisions],
+            },
+        }
+        who = get_jwt_identity()
+        what = {"entity": "remit", "key": {"organizationalUnitCode": organizationalUnitCode}}
+        Change(action="update", who=who, what=what, change=curr_change).save()
+
         return Response(
             json.dumps({"message": "Η αρμοδιότητα ενημερώθηκε με επιτυχία"}),
             mimetype="application/json",
@@ -124,7 +131,7 @@ def update_remit():
         )
 
     except Exception as e:
-        print(e)
+        print("UPDATE REMIT EXCEPTION", e)
         return Response(
             json.dumps({"message": f"<strong>Αποτυχία ενημέρωσης αρμοδιότητας:</strong> {e}"}),
             mimetype="application/json",
@@ -182,7 +189,7 @@ def retrieve_remit_by_code(code):
             legalProvisionText = provision["legalProvisionText"]
             data["legalProvisions"].append(
                 {
-                    "_id": {"$oid": str(provision.id)},
+                    "_id": str(provision.id),
                     "legalActKey": legalActKey,
                     "legalProvisionSpecs": legalProvisionSpecs,
                     "legalProvisionText": legalProvisionText,
