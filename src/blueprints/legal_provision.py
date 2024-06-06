@@ -77,8 +77,8 @@ def delete_legal_provision(legalProvisionID: str):
 
     who = get_jwt_identity()
     what = {"entity": "legalProvision", "key": {"legalProvisionID": legalProvisionID}}
-    print(who, what, existing_legal_provision.to_mongo().to_dict())
-    Change(action="delete", who=who, what=what, change=existing_legal_provision.to_mongo().to_dict()).save()
+    change = existing_legal_provision.to_mongo().to_dict()
+    Change(action="delete", who=who, what=what, change=change).save()
     return Response(json.dumps({"message": "<strong>H διάταξη διαγράφηκε</strong>"}), mimetype="application/json", status=201)
 
 

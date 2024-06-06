@@ -5,7 +5,9 @@ import json
 
 
 from src.models.psped.legal_provision import LegalProvision
+from src.models.apografi.organizational_unit import OrganizationalUnit
 from src.models.psped.foreas import Foreas
+from src.models.psped.remit import Remit
 
 
 def can_edit(f):
@@ -64,7 +66,7 @@ def can_delete_legal_provision(f):
     def decorated_function(*args, **kwargs):
         print(">>>>>> CAN DELETE DECORATOR")
         claims = get_jwt()
-        print(">>>>>> CLAIMS >>", claims)
+        # print(">>>>>> CLAIMS >>", claims)
 
         user_roles = claims["roles"]
         roles = [x for x in user_roles if x["role"] in ["EDITOR", "ADMIN", "ROOT"]]
@@ -73,23 +75,31 @@ def can_delete_legal_provision(f):
         # print(">>>>>> ALL CODES >>", all_codes)
 
         legal_provision_id = kwargs.get("legalProvisionID", "")
-        # print("LEGAL PROVISION ID >>>>", legal_provision_id)
+        print("LEGAL PROVISION ID >>>>", legal_provision_id)
 
         legal_provision = LegalProvision.objects.get(id=legal_provision_id)
         regulatedObject = legal_provision.regulatedObject
         regulatedObjectType = regulatedObject.regulatedObjectType
+        regulatedObjectId = regulatedObject.regulatedObjectId
 
+        code = ""
         if regulatedObjectType == "organization":
-            regulatedObjectId = regulatedObject.regulatedObjectId
             foreas = Foreas.objects.get(id=regulatedObjectId)
             code = foreas.code
-            if code not in all_codes:
-                return Response(
-                    json.dumps({"message": "<strong>Δεν έχετε τέτοιο δικαίωμα διαγραφής</strong>"}),
-                    mimetype="application/json",
-                    status=403,
-                )
-            print(">>>>>>>>>>>>> GO ON DELETE THE FUCKING LEGAL PROVISION !!!!")
+        elif regulatedObjectType == "organizationalUnit":
+            organizationalUnit = OrganizationalUnit.objects.get(id=regulatedObjectId)
+            code = organizationalUnit.code
+        elif regulatedObjectType == "remit":
+            remit = Remit.objects.get(id=regulatedObjectId)
+            code = remit.organizationalUnitCode
+
+        if code not in all_codes:
+            return Response(
+                json.dumps({"message": "<strong>Δεν έχετε τέτοιο δικαίωμα διαγραφής</strong>"}),
+                mimetype="application/json",
+                status=403,
+            )
+        print(">>>>>>>>>>>>> GO ON DELETE THE FUCKING LEGAL PROVISION !!!!")
 
         return f(*args, **kwargs)
 
