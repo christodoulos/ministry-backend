@@ -42,7 +42,6 @@ def get_legal_provisions_by_regulated_organization(code: str):
         provision["_id"] = str(provision["_id"])
         # Delete all ObjectId fields as they are not JSON serializable
         del provision["legalAct"]
-        # del provision["_id"]
         del provision["regulatedObject"]
 
     # debug_print("LEGAL PROVISIONS BY ORGANIZATION CODE", legal_provisions)
