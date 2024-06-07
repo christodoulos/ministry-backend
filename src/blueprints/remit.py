@@ -80,7 +80,7 @@ def update_remit():
         data = request.get_json()
         debug_print("UPDATE REMIT", data)
 
-        remitID = ObjectId(data["_id"]["$oid"])
+        remitID = ObjectId(data["_id"])
         organizationalUnitCode = data["organizationalUnitCode"]
         remitText = data["remitText"]
         remitType = data["remitType"]
@@ -139,6 +139,36 @@ def update_remit():
         )
 
 
+@remit.route("/status/<string:remitID>", methods=["PUT"])
+@jwt_required()
+def update_remit_status(remitID: str):
+    try:
+        data = request.get_json()
+        debug_print("UPDATE REMIT STATUS", data)
+
+        status = data["status"]
+        remit = Remit.objects.get(id=ObjectId(remitID))
+        remit.update(status=status)
+
+        who = get_jwt_identity()
+        what = {"entity": "remit", "key": {"remitID": remitID}}
+        Change(action="update", who=who, what=what, change={"status": status}).save()
+
+        return Response(
+            json.dumps({"message": f"Η αρμοδιότητα είναι πλέον {status}"}),
+            mimetype="application/json",
+            status=201,
+        )
+
+    except Exception as e:
+        print("UPDATE REMIT STATUS EXCEPTION", e)
+        return Response(
+            json.dumps({"message": f"<strong>Αποτυχία ενημέρωσης κατάστασης αρμοδιότητας:</strong> {e}"}),
+            mimetype="application/json",
+            status=500,
+        )
+
+
 @remit.route("", methods=["GET"])
 @jwt_required()
 def retrieve_all_remit():
@@ -168,21 +198,18 @@ def retrieve_remit_by_code(code):
     for remit in remits:
         # print(remit.to_json())
         data = {
-            "_id": {"$oid": str(remit.id)},
+            "_id": str(remit.id),
             "organizationalUnitCode": remit.organizationalUnitCode,
             "remitText": remit.remitText,
             "remitType": remit.remitType,
             "cofog": remit.cofog.to_mongo().to_dict(),
+            "status": remit.status,
             "legalProvisions": [],
         }
         # legal_provisions = [provision.to_dict() for provision in remit.legalProvisionRefs]
         legal_provisions = [provision for provision in remit.legalProvisionRefs]
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAA", legal_provisions)
 
         for provision in legal_provisions:
-            # print(">>>>>>>>>>", provision.to_json())
-            # legalActRef = provision["legalAct"]
-
             legalActRef = provision.legalAct
             legalActKey = legalActRef.legalActKey
             legalProvisionSpecs = provision["legalProvisionSpecs"].to_mongo().to_dict()
