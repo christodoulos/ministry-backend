@@ -104,3 +104,25 @@ def can_delete_legal_provision(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+def can_finalize_remits(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        claims = get_jwt()
+        user_roles = claims["roles"]
+        roles = [x for x in user_roles if x["role"] in ["EDITOR", "ADMIN", "ROOT"]]
+        all_codes = [code for entry in roles for code_list in (entry["foreas"], entry["monades"]) for code in code_list]
+
+        code = kwargs.get("code", "")
+
+        if code not in all_codes:
+            return Response(
+                json.dumps({"message": "<strong>Δεν έχετε τέτοιο δικαίωμα τροποποίησης</strong>"}),
+                mimetype="application/json",
+                status=403,
+            )
+
+        return f(*args, **kwargs)
+
+    return decorated_function

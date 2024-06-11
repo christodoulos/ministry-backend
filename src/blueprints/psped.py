@@ -6,11 +6,13 @@ from flask_jwt_extended import get_jwt_identity, jwt_required, get_jwt
 
 from src.blueprints.utils import debug_print, dict2string
 from src.models.apografi.organization import Organization
+from src.models.apografi.organizational_unit import OrganizationalUnit
 from src.models.psped.foreas import Foreas
 from src.models.psped.change import Change
 from src.models.psped.legal_act import LegalAct
 from src.models.psped.legal_provision import LegalProvision, RegulatedObject
-from src.blueprints.decorators import can_edit
+from src.blueprints.decorators import can_edit, can_update_delete, can_finalize_remits
+from src.models.psped.monada import Monada
 
 psped = Blueprint("psped", __name__)
 
@@ -169,3 +171,80 @@ def get_foreas_tree(code: str):
             mimetype="application/json",
             status=404,
         )
+
+
+@psped.route("/monada/<string:code>", methods=["GET"])
+def get_monada(code: str):
+    try:
+        monada = Monada.objects.get(code=code)
+        return Response(
+            monada.to_json(),
+            mimetype="application/json",
+            status=200,
+        )
+    except Monada.DoesNotExist:
+        return Response(
+            json.dumps({"remitsFinalized": False}),
+            mimetype="application/json",
+            status=200,
+        )
+
+
+@psped.route("/monada/all", methods=["GET"])
+def get_all_monades():
+    monades = Monada.objects()
+    return Response(
+        monades.to_json(),
+        mimetype="application/json",
+        status=200,
+    )
+
+
+@psped.route("/monada/aggregate/all", methods=["GET"])
+def get_all_monades_aggregate():
+    organizationalUnits = OrganizationalUnit.objects()
+    for unit in organizationalUnits:
+        monada = Monada.objects(code=unit.code).first()
+        # if monada exists then the organizational unit has remitsFinalized False
+        if monada:
+            unit.remitsFinalized = monada.remitsFinalized
+        else:
+            unit.remitsFinalized = False
+    return Response(
+        organizationalUnits.to_json(),
+        mimetype="application/json",
+        status=200,
+    )
+
+
+@psped.route("/monada/<string:code>/finalize_remits", methods=["PUT"])
+@jwt_required()
+@can_finalize_remits
+def finalize_remits(code: str):
+    data = request.get_json()
+    debug_print("FINALIZE REMITS", data)
+
+    remitsFinalized = data["status"]
+
+    monada = Monada.objects(code=code).first()
+
+    if monada:
+        monada.update(remitsFinalized=remitsFinalized)
+    else:
+        monada = Monada(code=code, remitsFinalized=remitsFinalized)
+        monada.save()
+
+    who = get_jwt_identity()
+    what = {"entity": "organizationalUnit", "key": {"code": code}}
+    Change(action="update", who=who, what=what, change={"remitsFinalized": remitsFinalized}).save()
+
+    return Response(
+        json.dumps(
+            {
+                "message": "Οι αρμοδιότητες της μονάδας ολοκληρώθηκαν" if remitsFinalized else "Αναίρεση ολοκλήρωσης αρμοδιοτήτων",
+                "remitsFinalized": remitsFinalized,
+            }
+        ),
+        mimetype="application/json",
+        status=201,
+    )
