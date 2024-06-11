@@ -170,7 +170,7 @@ def update_remit_status(remitID: str):
 
 
 @remit.route("", methods=["GET"])
-@jwt_required()
+# @jwt_required()
 def retrieve_all_remit():
     remits = Remit.objects()
     return Response(
