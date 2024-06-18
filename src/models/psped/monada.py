@@ -6,3 +6,4 @@ class Monada(me.Document):
 
     code = me.StringField(required=True, unique=True)
     remitsFinalized = me.BooleanField()
+    provisionText = me.StringField()

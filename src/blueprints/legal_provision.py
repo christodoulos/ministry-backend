@@ -49,6 +49,40 @@ def get_legal_provisions_by_regulated_organization(code: str):
     return Response(json.dumps(legal_provisions), mimetype="application/json", status=200)
 
 
+@legal_provision.route("by_regulated_organization_unit/<string:code>", methods=["GET"])
+@jwt_required()
+def get_legal_provisions_by_regulated_organization_unit(code: str):
+    organization_unit = Monada.objects.get(code=code)
+    # debug_print("LEGAL PROVISIONS BY ORGANIZATION UNIT CODE", organization_unit.to_mongo().to_dict())
+    organization_unit_id = organization_unit.id
+    regulatedObject = RegulatedObject(
+        regulatedObjectType="organizationUnit",
+        regulatedObjectId=organization_unit_id,
+    )
+    print(regulatedObject.to_mongo().to_dict())
+
+    legal_provisions = [provision.to_mongo().to_dict() for provision in LegalProvision.objects(regulatedObject=regulatedObject)]
+    # debug_print("LEGAL PROVISIONS BY ORGANIZATION UNIT CODE", legal_provisions)
+
+    for provision in legal_provisions:
+        # Determize legalActKey from legalActRef
+        legalActRef = provision["legalAct"]
+
+        legalAct = LegalAct.objects.get(id=legalActRef)
+        legalActKey = legalAct.legalActKey
+
+        # Add legalActKey to provision
+        provision["legalActKey"] = legalActKey
+        provision["_id"] = str(provision["_id"])
+        # Delete all ObjectId fields as they are not JSON serializable
+        del provision["legalAct"]
+        del provision["regulatedObject"]
+
+    # debug_print("LEGAL PROVISIONS BY ORGANIZATION UNIT CODE", legal_provisions)
+
+    return Response(json.dumps(legal_provisions), mimetype="application/json", status=200)
+
+
 @legal_provision.route("/<string:legalProvisionID>", methods=["DELETE"])
 @jwt_required()
 @can_delete_legal_provision

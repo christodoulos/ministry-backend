@@ -42,6 +42,22 @@ def get_foreas(code: str):
             mimetype="application/json",
             status=404,
         )
+        
+# @psped.route("/monada/<string:code>", methods=["GET"])
+# def get_monada(code: str):
+#     try:
+#         monada = Monada.objects.get(code=code)
+#         return Response(
+#             monada.to_json(),
+#             mimetype="application/json",
+#             status=200,
+#         )
+#     except Monada.DoesNotExist:
+#         return Response(
+#             json.dumps({"error": f"Δεν βρέθηκε μονάδα με κωδικό {code}"}),
+#             mimetype="application/json",
+#             status=404,
+#         )
 
 
 @psped.route("/organization/by-id/<string:id>", methods=["GET"])
@@ -151,6 +167,77 @@ def update_foreas(code: str):
 
     return Response(
         json.dumps({"message": "<strong>Ο φορέας ενημερώθηκε</strong>"}),
+        mimetype="application/json",
+        status=201,
+    )
+    
+
+@psped.route("organizationalUnit/<string:code>", methods=["PUT"])
+@jwt_required()
+@can_edit
+def update_monada(code: str):
+    curr_change = {}
+
+    data = request.get_json()
+    provisionText = data["provisionText"]
+    legalProvisions = data["legalProvisions"]
+    debug_print("UPDATE MONADA", data)
+
+    try:
+        organizationalUnit = Monada.objects.get(code=code)
+        existing_provisionText = organizationalUnit.provisionText
+
+        if provisionText != existing_provisionText:
+            organizationalUnit.provisionText = provisionText
+            organizationalUnit.save()
+            curr_change["provisionText"] = provisionText
+    except Monada.DoesNotExist:
+        organizationalUnit = Monada(code=code, provisionText=provisionText)
+        organizationalUnit.save()
+
+    regulatedObject = RegulatedObject(
+        regulatedObjectType="organizationUnit",
+        regulatedObjectId=organizationalUnit.id,
+    )
+    debug_print("REGULATED OBJECT", regulatedObject.to_mongo().to_dict())
+
+    legal_provisions_changes_updates = []
+    legal_provisions_changes_inserts = []
+    for provision in legalProvisions:
+        legalActKey = provision["legalActKey"]
+        legalAct = LegalAct.objects.get(legalActKey=legalActKey)
+        legalProvisionSpecs = provision["legalProvisionSpecs"]
+        legalProvisionText = provision["legalProvisionText"]
+        existing = LegalProvision.objects(
+            regulatedObject=regulatedObject, legalAct=legalAct, legalProvisionSpecs=legalProvisionSpecs
+        ).first()
+        debug_print("CURRENT LEGAL PROVISION", provision)
+        if existing:
+            print("EXISTING LEGAL PROVISION FOUND")
+            existing.update(legalProvisionText=legalProvisionText)
+            legal_provisions_changes_updates.append(existing.to_mongo())
+        else:
+            print("NO EXISTING LEGAL PROVISION FOUND")
+            legalProvision = LegalProvision(
+                regulatedObject=regulatedObject,
+                legalAct=legalAct,
+                legalProvisionSpecs=legalProvisionSpecs,
+                legalProvisionText=legalProvisionText,
+            )
+            legalProvision.save()
+            legal_provisions_changes_inserts.append(legalProvision.to_mongo())
+
+    curr_change["legalProvisions"] = {
+        "inserts": legal_provisions_changes_inserts,
+        "updates": legal_provisions_changes_updates,
+    }
+
+    who = get_jwt_identity()
+    what = {"entity": "organizationalUnit", "key": {"code": code}}
+    Change(action="update", who=who, what=what, change=curr_change).save()
+    
+    return Response(
+        json.dumps({"message": "<strong>Η μονάδα ενημερώθηκε</strong>"}),
         mimetype="application/json",
         status=201,
     )
