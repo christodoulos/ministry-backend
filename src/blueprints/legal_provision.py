@@ -53,7 +53,7 @@ def get_legal_provisions_by_regulated_organization(code: str):
 @jwt_required()
 def get_legal_provisions_by_regulated_organization_unit(code: str):
     organization_unit = Monada.objects.get(code=code)
-    # debug_print("LEGAL PROVISIONS BY ORGANIZATION UNIT CODE", organization_unit.to_mongo().to_dict())
+    debug_print("LEGAL PROVISIONS BY ORGANIZATION UNIT CODE", organization_unit.to_mongo().to_dict())
     organization_unit_id = organization_unit.id
     regulatedObject = RegulatedObject(
         regulatedObjectType="organizationUnit",
