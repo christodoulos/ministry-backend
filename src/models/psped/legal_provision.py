@@ -5,7 +5,7 @@ from src.models.apografi.organizational_unit import OrganizationalUnit as Monada
 
 
 class RegulatedObject(me.EmbeddedDocument):
-    regulatedObjectType = me.StringField(required=True, choices=["organization", "organizationUnit", "remit"])
+    regulatedObjectType = me.StringField(required=True, choices=["organization", "organizationalUnit", "remit"])
     # regulatedObjectCode = me.StringField(required=True)
     regulatedObjectId = me.ObjectIdField(required=True)
     # regulatedObjectObjectId = me.StringField()
@@ -68,7 +68,7 @@ class LegalProvision(me.Document):
         if legalProvisionType == "organization":
             foreas = Foreas.objects.get(code=code)
             return RegulatedObject(regulatedObjectType=legalProvisionType, regulatedObjectId=foreas.id)
-        elif legalProvisionType == "organizationUnit":
+        elif legalProvisionType == "organizationalUnit":
             monada = Monada.objects.get(code=code)
             return RegulatedObject(regulatedObjectType=legalProvisionType, regulatedObjectId=monada.id)
         elif legalProvisionType == "remit":

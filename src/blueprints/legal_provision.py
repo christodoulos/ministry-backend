@@ -56,7 +56,7 @@ def get_legal_provisions_by_regulated_organization_unit(code: str):
     debug_print("LEGAL PROVISIONS BY ORGANIZATION UNIT CODE", organization_unit.to_mongo().to_dict())
     organization_unit_id = organization_unit.id
     regulatedObject = RegulatedObject(
-        regulatedObjectType="organizationUnit",
+        regulatedObjectType="organizationalUnit",
         regulatedObjectId=organization_unit_id,
     )
     print(regulatedObject.to_mongo().to_dict())

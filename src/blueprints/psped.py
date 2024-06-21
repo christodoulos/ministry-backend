@@ -42,7 +42,8 @@ def get_foreas(code: str):
             mimetype="application/json",
             status=404,
         )
-        
+
+
 # @psped.route("/monada/<string:code>", methods=["GET"])
 # def get_monada(code: str):
 #     try:
@@ -170,7 +171,7 @@ def update_foreas(code: str):
         mimetype="application/json",
         status=201,
     )
-    
+
 
 @psped.route("organizationalUnit/<string:code>", methods=["PUT"])
 @jwt_required()
@@ -196,8 +197,8 @@ def update_monada(code: str):
         organizationalUnit.save()
 
     regulatedObject = RegulatedObject(
-        regulatedObjectType="organizationUnit",
-        regulatedObjectId=organizationalUnit.id,
+        regulatedObjectType="organizationalUnit",
+        regulatedObjectId=organizationalUnit.apografi.monada.id,
     )
     debug_print("REGULATED OBJECT", regulatedObject.to_mongo().to_dict())
 
@@ -235,7 +236,7 @@ def update_monada(code: str):
     who = get_jwt_identity()
     what = {"entity": "organizationalUnit", "key": {"code": code}}
     Change(action="update", who=who, what=what, change=curr_change).save()
-    
+
     return Response(
         json.dumps({"message": "<strong>Η μονάδα ενημερώθηκε</strong>"}),
         mimetype="application/json",

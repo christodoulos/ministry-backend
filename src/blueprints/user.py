@@ -1,6 +1,7 @@
 from flask import Blueprint, Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from src.models.user import User
+from src.blueprints.decorators import has_helpdesk_role
 import json
 
 
@@ -18,3 +19,11 @@ def get_my_organizations():
     monadesCodes = [item for sublist in monadesCodesListofLists for item in sublist]
 
     return Response(json.dumps({"organizations": organizationCodes, "organizational_units": monadesCodes}), status=200)
+
+
+@user.route("/all")
+@jwt_required()
+@has_helpdesk_role
+def get_all_users():
+    users = User.objects()
+    return Response(users.to_json(), status=200)

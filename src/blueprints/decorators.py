@@ -126,3 +126,23 @@ def can_finalize_remits(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+def has_helpdesk_role(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        claims = get_jwt()
+        user_roles = claims["roles"]
+        roles = [x for x in user_roles]
+        # check if user has helpdesk role
+        helpdesk_roles = [x for x in roles if x["role"] == "HELPDESK"]
+
+        if not helpdesk_roles:
+            return Response(
+                json.dumps({"message": "<strong>Δεν έχετε τέτοιο δικαίωμα</strong>"}),
+                mimetype="application/json",
+                status=403,
+            )
+        return f(*args, **kwargs)
+
+    return decorated_function

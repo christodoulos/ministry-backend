@@ -1,11 +1,11 @@
-from flask import Blueprint, Response
 import json
+
+from flask import Blueprint, Response
 
 from src.blueprints.utils import convert_greek_accented_chars
 from src.models.apografi.dictionary import Dictionary
 from src.models.apografi.organization import Organization
 from src.models.apografi.organizational_unit import OrganizationalUnit
-
 
 apografi = Blueprint("apografi", __name__)
 
