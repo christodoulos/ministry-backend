@@ -1,6 +1,7 @@
-from flask import Blueprint, Response
+from flask import Blueprint, Response, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.models.user import User
+from src.models.user import User, UserRole
+from src.models.psped.change import Change
 from src.blueprints.decorators import has_helpdesk_role
 import json
 
@@ -27,3 +28,42 @@ def get_my_organizations():
 def get_all_users():
     users = User.objects()
     return Response(users.to_json(), status=200)
+
+@user.route("/<string:email>", methods=["PUT"])
+@jwt_required()
+# @has_helpdesk_role
+def set_user_accesses(email: str):
+
+    data = request.get_json()
+
+    orgarganizationCodes = data["organizationCodes"]
+    organizationalUnitCodes = data["organizationalUnitCodes"]
+
+    user = User.objects.get(email=email)
+
+    editor_role = None
+    for role in user.roles:
+        if role.role == 'EDITOR':
+            editor_role = role
+            break
+
+    if editor_role:
+        print("XXX1")
+        editor_role.foreas = orgarganizationCodes
+        editor_role.monades = organizationalUnitCodes
+    else:
+        print("XXX2")
+        new_role = UserRole(role='EDITOR', foreas=orgarganizationCodes, monades=organizationalUnitCodes)
+        user.roles.append(new_role)
+
+    user.save()
+
+    who = get_jwt_identity()
+    what = {"entity": "User", "key": {"email": email}}
+    Change(action="update", who=who, what=what, change={"foreas": orgarganizationCodes, "monades":organizationalUnitCodes}).save()
+
+    return Response(
+        json.dumps({"message": "<strong>Ο χρηστης ενημερώθηκε</strong>"}),
+        mimetype="application/json",
+        status=201,
+    )
