@@ -31,7 +31,7 @@ def get_all_users():
 
 @user.route("/<string:email>", methods=["PUT"])
 @jwt_required()
-# @has_helpdesk_role
+@has_helpdesk_role
 def set_user_accesses(email: str):
 
     data = request.get_json()
@@ -48,18 +48,16 @@ def set_user_accesses(email: str):
             break
 
     if editor_role:
-        print("XXX1")
         editor_role.foreas = orgarganizationCodes
         editor_role.monades = organizationalUnitCodes
     else:
-        print("XXX2")
         new_role = UserRole(role='EDITOR', foreas=orgarganizationCodes, monades=organizationalUnitCodes)
         user.roles.append(new_role)
-
+    
     user.save()
 
     who = get_jwt_identity()
-    what = {"entity": "User", "key": {"email": email}}
+    what = {"entity": "user", "key": {"email": email}}
     Change(action="update", who=who, what=what, change={"foreas": orgarganizationCodes, "monades":organizationalUnitCodes}).save()
 
     return Response(
